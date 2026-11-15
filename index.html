@@ -15,41 +15,60 @@
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="header">
-    <a class="brand" href="#" aria-label="DMA home"><img src="assets/mark.svg" alt="" width="26" height="26">DMA</a>
-    <nav aria-label="Page sections"><a href="#overview">Overview</a><a href="#skills">In-hand skills</a><a href="#tools">Tool use</a><a href="#teleoperation">Teleoperation</a></nav>
+    <div class="header-inner">
+      <a class="brand" href="#" aria-label="DMA home"><img src="assets/mark.svg" alt="DMA project logo" width="44" height="40"><span class="brand-wordmark">DexMimic<em>Anything</em></span></a>
+      <div class="header-actions"><nav aria-label="Page sections"><a href="#overview">Overview</a><a href="#skills">In-hand skills</a><a href="#tools">Tool use</a><a href="#teleoperation">Teleoperation</a></nav><button class="theme-toggle" type="button" aria-label="Theme: system. Switch to light theme." title="Theme: system"><span class="theme-icon" aria-hidden="true">◐</span><span class="theme-label">Auto</span></button></div>
+    </div>
   </header>
   <main id="main">
-    <section class="intro" aria-labelledby="title">
-      <p class="eyebrow">Human demonstrations → Generalizable in-hand skills</p>
-      <h1 id="title"><span>DexMimicAnything</span><br>Learning Generalizable In-Hand Skills<br class="desktop-break"> from Human Demonstrations</h1>
-      <p class="anonymous">Anonymous Authors</p>
-      <p class="lead">One controller. Diverse objects. Dexterous in-hand skills.</p>
-      <div class="intro-links"><a class="button" href="#tools">Explore the demonstrations <span aria-hidden="true">↗</span></a><a class="text-link" href="#overview">Read the overview <span aria-hidden="true">↓</span></a></div>
+    <section class="masthead" aria-labelledby="title">
+      <div class="hero-film video-wrap"><video id="hero-video" src="media/overview.mp4" poster="posters/overview.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Selected autonomous real robot demonstrations"></video></div>
+      <div class="hero-shade" aria-hidden="true"></div>
+      <div class="hero-copy shell">
+        <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span> Human motion. Physical intelligence.</p>
+        <h1 id="title">DexMimic<em>Anything</em></h1>
+        <p class="hero-subtitle">Learning Generalizable In-Hand Skills<br class="desktop-break"> from Human Demonstrations</p>
+        <p class="anonymous">Anonymous Authors</p>
+        <p class="lead">One controller. Diverse objects.<br>Dexterous in-hand skills.</p>
+        <div class="intro-links"><a class="button" href="#tools">Explore the demonstrations <span aria-hidden="true">↗</span></a><a class="text-link" href="#overview">The idea <span aria-hidden="true">↓</span></a></div>
+      </div>
+      <div class="hero-bottom shell">
+        <a class="scroll-cue" href="#overview"><span class="scroll-ring" aria-hidden="true">↓</span><span>Scroll to discover</span></a>
+        <div class="film-caption"><span>Selected autonomous excerpts</span><span>Original speed · Silent</span></div>
+        <button class="hero-toggle" type="button" aria-controls="hero-video" aria-label="Pause overview film"><span class="toggle-symbol" aria-hidden="true">Ⅱ</span><span class="toggle-label">Pause film</span></button>
+      </div>
     </section>
-    <figure class="hero">
-      <div class="video-wrap"><video id="hero-video" src="media/overview.mp4" poster="posters/overview.jpg" controls autoplay muted loop playsinline preload="metadata" aria-label="Selected autonomous real robot demonstrations"></video></div>
-      <figcaption><span class="live-dot" aria-hidden="true"></span> A single policy, deployed on a physical robot <span class="caption-detail">Selected autonomous excerpts · Real-time playback · Silent</span></figcaption>
-    </figure>
     <section id="overview" class="section overview" aria-labelledby="overview-heading">
-      <div class="section-heading"><span class="section-number">01 / Overview</span><h2 id="overview-heading">Learning from human hand–object motion</h2></div>
+      <div class="shell">
+      <div class="overview-layout reveal">
+      <div class="section-heading"><span class="section-number">01 / The idea</span><h2 id="overview-heading">Human motion.<br><em>Robot dexterity.</em></h2></div>
       <div class="overview-copy"><p>In-hand manipulation demands precise multi-finger coordination as an object moves and finger contacts change. <strong>DexMimicAnything (DMA)</strong> learns one reactive hand–object co-tracking controller from human demonstrations, shared across objects and skills.</p><p>DexEmpla provides in-hand manipulation references spanning <strong>43 objects</strong>. Model-based reinforcement learning combines hand-guided pairs of local surface points, an interaction-aware object-tracking reward, and return-based reset sampling. The learned controller transfers to a physical robot without fine-tuning.</p></div>
-      <div class="method-flow" aria-label="Method: human demonstrations, shared policy learning, real world deployment">
+      </div>
+      <div class="method-flow reveal" aria-label="Method: human demonstrations, shared policy learning, real world deployment">
         <div><span class="step-index">01</span><h3>Human demonstrations</h3><p>Retargeted hand–object references and per-frame interaction labels.</p></div><span class="flow-arrow" aria-hidden="true">→</span>
         <div><span class="step-index">02</span><h3>One shared controller</h3><p>Model-based learning of coordinated hand and object tracking.</p></div><span class="flow-arrow" aria-hidden="true">→</span>
         <div><span class="step-index">03</span><h3>Zero-shot deployment</h3><p>Recorded reference tracking and live teleoperation on a physical robot.</p></div>
       </div>
+      <div class="sim-placeholder reveal" role="note" aria-label="Simulation demonstration placeholder">
+        <div class="sim-frame"><span class="sim-frame-label">Simulation / To be added</span><svg viewBox="0 0 480 260" fill="none" aria-hidden="true" focusable="false"><path class="sim-grid" d="M20 230H460M40 205H440M60 180H420M80 155H400M100 130H380M110 250L200 110M180 250L220 110M250 250L240 110M320 250L260 110M390 250L280 110"/><path class="sim-arm" d="M132 78L168 115L155 164M348 78L312 115L325 164"/><circle class="sim-joint" cx="132" cy="78" r="12"/><circle class="sim-joint" cx="168" cy="115" r="10"/><circle class="sim-joint" cx="348" cy="78" r="12"/><circle class="sim-joint" cx="312" cy="115" r="10"/><path class="sim-hand" d="M142 166L140 186M150 170L150 192M158 170L160 190M166 166L171 183M312 166L307 183M320 170L320 192M328 170L330 190M336 166L341 183"/><path class="sim-object" d="M216 176L240 163L265 176V205L240 219L216 205ZM216 176L240 190L265 176M240 190V219"/></svg></div>
+        <div class="sim-caption"><span class="section-number">Simulation to reality</span><h3>A place for the<br>simulation rollout.</h3><p>Simulation demonstration to be added. The videos below show physical robot execution.</p></div>
+      </div>
+      </div>
     </section>
-    <section id="skills" class="section" aria-labelledby="skills-heading">
-      <div class="section-heading"><span class="section-number">02 / In-hand skills</span><h2 id="skills-heading">Coordination beyond a fixed grasp</h2><p>Translation, rotation, and reorientation with a shared controller.</p></div>
+    <section id="skills" class="section section-skills" aria-labelledby="skills-heading">
+      <div class="shell">
+      <div class="section-heading section-heading-split reveal"><div><span class="section-number">02 / In-hand skills</span><h2 id="skills-heading">Coordination<br><em>beyond a fixed grasp.</em></h2></div><p>Translation, rotation, and reorientation.<br>A shared controller across diverse objects.</p></div>
       <div class="video-grid" id="skills-grid">
         <figure class="demo"><div class="video-wrap"><video src="media/rod-rotation.mp4" poster="posters/rod-rotation.jpg" controls muted loop playsinline preload="none" aria-label="Autonomous cylindrical rod rotation"></video><span class="mode">Autonomous</span></div><figcaption><h3>Rod rotation</h3><p>Cylindrical rod · In-hand rotation</p></figcaption></figure>
         <figure class="demo"><div class="video-wrap"><video src="media/rod-translation.mp4" poster="posters/rod-translation.jpg" controls muted loop playsinline preload="none" aria-label="Autonomous rectangular rod translation"></video><span class="mode">Autonomous</span></div><figcaption><h3>Rod translation</h3><p>Rectangular rod · In-hand translation</p></figcaption></figure>
         <figure class="demo"><div class="video-wrap"><video src="media/cuboid-reorientation.mp4" poster="posters/cuboid-reorientation.jpg" controls muted loop playsinline preload="none" aria-label="Autonomous cuboid reorientation"></video><span class="mode">Autonomous</span></div><figcaption><h3>Cuboid reorientation</h3><p>Cuboid · Changing the grasped orientation</p></figcaption></figure>
         <figure class="demo"><div class="video-wrap"><video src="media/cube-turn.mp4" poster="posters/cube-turn.jpg" controls muted loop playsinline preload="none" aria-label="Autonomous cube face turn"></video><span class="mode">Autonomous</span></div><figcaption><h3>Cube face turn</h3><p>Cube · Reorienting within the hand</p></figcaption></figure>
       </div>
+      </div>
     </section>
-    <section id="tools" class="section" aria-labelledby="tools-heading">
-      <div class="section-heading"><span class="section-number">03 / Real-world tool use</span><h2 id="tools-heading">From in-hand motion to functional use</h2><p>The same controller executes recorded references without task-specific fine-tuning.</p></div>
+    <section id="tools" class="section section-tools" aria-labelledby="tools-heading">
+      <div class="shell">
+      <div class="section-heading section-heading-split reveal"><div><span class="section-number">03 / Real-world tool use</span><h2 id="tools-heading">From motion<br><em>to functional use.</em></h2></div><p>The same controller executes recorded references without task-specific fine-tuning.</p></div>
       <div class="video-grid">
         <figure class="demo"><div class="video-wrap"><video src="media/screwdriver.mp4" poster="posters/screwdriver.jpg" controls muted loop playsinline preload="none" aria-label="Autonomous screwdriver manipulation"></video><span class="mode">Autonomous</span></div><figcaption><h3>Screwdriver</h3><p>Reorientation and turning</p></figcaption></figure>
         <figure class="demo"><div class="video-wrap"><video src="media/bulb.mp4" poster="posters/bulb.jpg" controls muted loop playsinline preload="none" aria-label="Autonomous bulb insertion and illumination"></video><span class="mode">Autonomous</span></div><figcaption><h3>Bulb installation</h3><p>Turning the bulb until it lights</p></figcaption></figure>
@@ -59,15 +78,18 @@
         <figure class="demo"><div class="video-wrap"><video src="media/bottle-reorientation.mp4" poster="posters/bottle-reorientation.jpg" controls muted loop playsinline preload="none" aria-label="Autonomous bottle reorientation"></video><span class="mode">Autonomous</span></div><figcaption><h3>Bottle reorientation</h3><p>Changing the tool orientation in hand</p></figcaption></figure>
       </div>
       <p class="gallery-note">Videos show selected excerpts at their original playback speed. Demonstrations illustrate behavior; they are not a complete evaluation set.</p>
+      </div>
     </section>
-    <section id="teleoperation" class="section" aria-labelledby="teleop-heading">
-      <div class="section-heading"><span class="section-number">04 / Teleoperation</span><h2 id="teleop-heading">Human guidance, the same learned controller</h2><p>Live human references guide tool manipulation through the shared controller.</p></div>
+    <section id="teleoperation" class="section section-teleop" aria-labelledby="teleop-heading">
+      <div class="shell">
+      <div class="section-heading section-heading-split reveal"><div><span class="section-number">04 / Teleoperation</span><h2 id="teleop-heading">Human guidance.<br><em>The same controller.</em></h2></div><p>Live human references guide tool manipulation through the shared controller.</p></div>
       <div class="video-grid">
         <figure class="demo"><div class="video-wrap"><video src="media/teleop-bulb-screwdriver.mp4" poster="posters/teleop-bulb-screwdriver.jpg" controls muted loop playsinline preload="none" aria-label="Teleoperated bulb installation"></video><span class="mode teleop">Teleoperated</span></div><figcaption><h3>Teleoperated bulb installation</h3><p>Turning the bulb under live human guidance</p></figcaption></figure>
         <figure class="demo"><div class="video-wrap"><video src="media/teleop-screwdriver-bulb.mp4" poster="posters/teleop-screwdriver-bulb.jpg" controls muted loop playsinline preload="none" aria-label="Teleoperated screwdriver use"></video><span class="mode teleop">Teleoperated</span></div><figcaption><h3>Teleoperated screwdriver use</h3><p>Tool manipulation using the shared controller</p></figcaption></figure>
       </div>
+      </div>
     </section>
-    <footer><a class="footer-brand" href="#">DexMimicAnything</a><p>Anonymous supplementary project page</p><a href="#title">Back to top ↑</a></footer>
+    <footer><div class="shell footer-inner"><a class="footer-brand" href="#"><img src="assets/mark.svg" alt="DMA project logo" width="66" height="60"><span class="footer-wordmark">DexMimic<em>Anything</em><span>From human motion to robot dexterity.</span></span></a><div class="footer-meta"><p>Anonymous supplementary project page</p><a href="#title">Back to top <span aria-hidden="true">↑</span></a></div></div></footer>
   </main>
 </body>
 </html>
