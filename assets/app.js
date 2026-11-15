@@ -50,7 +50,16 @@ filmToggle?.addEventListener('click', () => {
   else hero.pause();
 });
 for (const video of videos) {
+  // The distributed files have no audio track; keep every player silent as well.
+  const keepSilent = () => {
+    if (!video.muted) video.muted = true;
+    if (video.volume !== 0) video.volume = 0;
+  };
+  video.defaultMuted = true;
+  keepSilent();
+  video.addEventListener('volumechange', keepSilent);
   video.addEventListener('play', () => {
+    keepSilent();
     for (const other of videos) if (other !== video) other.pause();
     updateFilmControl();
   });
