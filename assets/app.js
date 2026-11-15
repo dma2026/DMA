@@ -30,6 +30,75 @@ const filmToggle = document.querySelector('.hero-toggle');
 const header = document.querySelector('.header');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+// One component owns framing. Its measured Grid cells, rather than a list of
+// screen resolutions, define the space available to the hand and the copy.
+class AdaptiveHero {
+  constructor(root, navigation) {
+    this.root = root;
+    this.navigation = navigation;
+    this.layout = root.querySelector('.hero-layout');
+    this.action = root.querySelector('.hero-action-space');
+    this.copy = root.querySelector('.hero-copy');
+    this.video = root.querySelector('video');
+    this.frame = 0;
+    // A conservative envelope of the reviewed montage's hand/tool interaction.
+    // This is fixed composition guidance, not per-frame object tracking.
+    this.subject = { x: .08, y: .14, width: .36, height: .69 };
+    this.observer = new ResizeObserver(() => this.schedule());
+    [root, navigation, this.layout, this.action, this.copy].filter(Boolean)
+      .forEach(element => this.observer.observe(element));
+    this.video.addEventListener('loadedmetadata', () => this.schedule());
+    this.schedule();
+  }
+  schedule() {
+    if (this.frame) return;
+    this.frame = requestAnimationFrame(() => {
+      this.frame = 0;
+      this.update();
+    });
+  }
+  set(name, value) {
+    const pixels = `${Math.round(value * 100) / 100}px`;
+    if (this.root.style.getPropertyValue(name) !== pixels) this.root.style.setProperty(name, pixels);
+  }
+  update() {
+    this.set('--hero-header', this.navigation?.getBoundingClientRect().height ?? 88);
+    const bounds = this.root.getBoundingClientRect();
+    const reserved = this.action.getBoundingClientRect();
+    const copy = this.copy.getBoundingClientRect();
+    const stacked = getComputedStyle(this.layout).getPropertyValue('--hero-flow').trim() === 'stacked';
+    const sourceWidth = this.video.videoWidth || 1920;
+    const sourceHeight = this.video.videoHeight || 1080;
+    const safeWidth = Math.max(1, reserved.width - 32);
+    const safeHeight = Math.max(1, reserved.height - (stacked ? 86 : 32));
+    const scale = Math.min(safeWidth / (this.subject.width * sourceWidth), safeHeight / (this.subject.height * sourceHeight));
+    const width = sourceWidth * scale;
+    const height = sourceHeight * scale;
+    const x = Math.min(0, reserved.left - bounds.left + 16 + (safeWidth - this.subject.width * width) / 2 - this.subject.x * width);
+    const y = reserved.top - bounds.top + 16 - this.subject.y * height;
+    const subjectRight = x + (this.subject.x + this.subject.width) * width;
+    const subjectBottom = y + (this.subject.y + this.subject.height) * height;
+    this.set('--scene-width', width);
+    this.set('--scene-height', height);
+    this.set('--scene-x', x);
+    this.set('--scene-y', y);
+    const shadeStart = subjectRight + 12;
+    const shadeEnd = Math.max(shadeStart + 32, Math.min(bounds.width, x + width));
+    this.set('--shade-start', shadeStart);
+    this.set('--shade-solid', Math.min(shadeEnd - 1, Math.max(shadeStart + 24, copy.left - bounds.left - 8)));
+    this.set('--shade-end', shadeEnd);
+    this.set('--shade-bottom-start', Math.min(bounds.height - 1, subjectBottom + 12));
+    this.set('--shade-bottom-end', bounds.height);
+    const fadeEnd = Math.min(y + height, copy.top - bounds.top - 12);
+    this.set('--stack-fade-start', Math.min(fadeEnd - 24, Math.max(subjectBottom + 8, fadeEnd - 110)));
+    this.set('--stack-fade-end', fadeEnd);
+    this.root.dataset.heroLayout = stacked ? 'stacked' : 'overlay';
+  }
+}
+if ('ResizeObserver' in window) {
+  document.querySelectorAll('.masthead').forEach(root => new AdaptiveHero(root, header));
+}
+
 function updateFilmControl() {
   if (!hero || !filmToggle) return;
   const playing = !hero.paused && !hero.ended;
