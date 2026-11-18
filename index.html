@@ -6,13 +6,13 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-YFgk8M/EEbcidLy+1fW8flmKBU0SEltqSAUfuoj7CN8='; style-src 'self'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>DexMimicAnything</title>
 <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/fonts/fonts.css?v=e51b64c7">
 <link rel="stylesheet" href="assets/style.css?v=2aad0f43">
 <link rel="stylesheet" href="assets/hero-palettes.css?v=a4302265">
-<script src="assets/app.js?v=69bea1d2" defer></script>
+<script src="assets/app.js?v=222a6be18930" defer></script>
 </head>
 <body>
 <a class="skip" href="#why">Skip to content</a>
@@ -27,7 +27,7 @@
 <main>
 <!-- ───────────── Hero ───────────── -->
 <section class="hero" id="top" aria-labelledby="hero-title">
-  <div class="hero-stage" id="hero-stage"><video id="hero-video" muted playsinline preload="auto" poster="media/real/hammer_drive_nail.jpg" src="media/real/hammer_drive_nail.mp4?reel&amp;v=900p1" aria-label="Real-robot demonstrations, one task at a time"></video></div>
+  <div class="hero-stage" id="hero-stage"><video id="hero-video" muted playsinline preload="auto" poster="media/reel/hammer_drive_nail.webp" src="media/reel/hammer_drive_nail.mp4" aria-label="Real-robot demonstrations, one task at a time"></video><script>if(!location.hash && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches)document.getElementById('hero-video').play().catch(()=>{});</script></div>
   <div class="hero-copy">
     <h1 id="hero-title">DexMimic<em>Anything</em></h1>
     <p class="hero-sub">Learning Generalizable In-Hand Skills from Human Demonstrations</p>
@@ -170,7 +170,7 @@
       <p>From human demonstrations to dexterous tool use on the real robot.</p>
     </header>
     <div class="reveal">
-      <div class="vframe"><video controls muted playsinline preload="none" poster="media/main/dma_r9.jpg" src="media/main/dma_r9.mp4"></video></div>
+      <div class="vframe"><video controls muted playsinline preload="none" data-deferred-poster="media/main/dma_r9.jpg" src="media/main/dma_r9.mp4"></video></div>
     </div>
   </div>
 </section>

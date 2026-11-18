@@ -4,13 +4,29 @@ const $ = (s, r = document) => r.querySelector(s);
 const NS = 'http://www.w3.org/2000/svg';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const pendingPosters = new Map();
+const posterObserver = new IntersectionObserver(entries => {
+  for (const entry of entries) {
+    if (!entry.isIntersecting) continue;
+    const video = entry.target;
+    video.poster = pendingPosters.get(video);
+    pendingPosters.delete(video);
+    posterObserver.unobserve(video);
+  }
+}, {rootMargin: '240px'});
+function queuePoster(video, url) {
+  pendingPosters.set(video, url);
+  posterObserver.observe(video);
+}
+document.querySelectorAll('[data-deferred-poster]').forEach(v => queuePoster(v, v.dataset.deferredPoster));
 function h(tag, attrs = {}, ...kids) {
   const svg = ['svg', 'g', 'rect', 'circle', 'line', 'path', 'text', 'polygon', 'polyline', 'tspan'].includes(tag);
   const el = svg ? document.createElementNS(NS, tag) : document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k.startsWith('aria-')) { el.setAttribute(k, String(v)); continue; }
     if (v == null || v === false) continue;
-    if (k === 'class') el.setAttribute('class', v);
+    if (k === 'poster' && tag === 'video') queuePoster(el,v);
+    else if (k === 'class') el.setAttribute('class', v);
     else if (k === 'text') el.textContent = v;
     else if (k === 'css') for (const [p, val] of Object.entries(v)) el.style.setProperty(p, val);
     else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
@@ -182,7 +198,7 @@ function player({ tag } = {}) {
     el, video, onTime: f => listeners.push(f),
     setTag: t => { if (tagEl) tagEl.textContent = t; },
     load(src, poster) {
-      video._userPaused = false; video.poster = poster; video.src = src;
+      video._userPaused = false; queuePoster(video, poster); video.src = src;
       el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
       if (video._vis && !reduced) video.play().catch(() => {});
     },
@@ -247,11 +263,10 @@ function stageStrip(cls, pl) {
     cur = (i + REEL.length) % REEL.length; const [f, label] = REEL[cur];
     chips.forEach((c, j) => { c.setAttribute('aria-selected', j === cur); c.classList.toggle('done', j < cur); c.style.setProperty('--p', 0); });
     name.textContent = label;
-    // The reel loads each clip under its own URL (?reel) so it is never queued behind a section player's request for the same file.
-    if (vid.getAttribute('src') === `media/real/${f}.mp4?reel&v=900p1`) { frame(); play(); return; }
+    if (vid.getAttribute('src') === `media/reel/${f}.mp4`) { frame(); play(); return; }
     stage.classList.add('swap');
-    setTimeout(() => { vid.poster = `media/real/${f}.jpg`; vid.src = `media/real/${f}.mp4?reel&v=900p1`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
-    const next = REEL[(cur + 1) % REEL.length][0]; new Image().src = `media/real/${next}.jpg`;
+    setTimeout(() => { vid.poster = `media/reel/${f}.webp`; vid.src = `media/reel/${f}.mp4`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
+
   }
   vid.addEventListener('timeupdate', () => chips[cur]?.style.setProperty('--p', vid.currentTime / (vid.duration || 1)));
   vid.addEventListener('ended', () => show(cur + 1));
@@ -273,7 +288,7 @@ function stageStrip(cls, pl) {
   b.addEventListener('ended', () => { a.currentTime = 0; b.currentTime = 0; if (b._vis) { a.play().catch(() => {}); b.play().catch(() => {}); } });
   function load(i) {
     cur = WHY[i]; ta.textContent = cur.aTag; tb.textContent = cur.bTag; ta.classList.remove('show'); tb.classList.remove('show');
-    a.poster = cur.a + '.jpg'; a.src = cur.a + '.mp4'; b.poster = cur.b + '.jpg'; b.src = cur.b + '.mp4?v=900p1';
+    queuePoster(a,cur.a+'.jpg'); a.src = cur.a + '.mp4'; queuePoster(b,cur.b+'.jpg'); b.src = cur.b + '.mp4?v=900p1';
     if (a._vis && !reduced) { a.play().catch(() => {}); b.play().catch(() => {}); }
   }
   seg($('#why-tabs'), WHY.map(w => w.name), load, { label: 'Tool' });
@@ -335,7 +350,7 @@ const objectSplitOrder = [1, 0];
 
 /* Simulation references in the same row-major order as the overview film. */
 (function simulation() {
-  const media = file => 'media/sim/references/' + file + (file.endsWith('.mp4') ? '?v=soft2' : '?v=soft1');
+  const media = file => 'media/sim/references/' + file + (file.endsWith('.mp4') ? '?v=reel3' : '?v=soft1');
   const root = $('#sim-root');
   const files = SIM.map((_, i) => String(i + 1).padStart(2, '0'));
   const label = i => [files[i], SIM[i][1], SIM[i][3], SIM[i][2]].filter(Boolean).join(' · ');
@@ -399,7 +414,7 @@ const objectSplitOrder = [1, 0];
   // Enlarge the playing grid cell until its standalone clip presents a decoded frame.
   function makeLayer(i, phase) {
     const col = i % 8, row = Math.floor(i / 8);
-    const video = h('video', { muted: true, playsinline: true, loop: true, preload: 'auto', poster: media(files[i] + '.jpg') });
+    const video = h('video', { muted: true, playsinline: true, loop: true, preload: 'auto', poster: overview.readyState >= 2 ? null : media(files[i] + '.jpg') });
     video.muted = true;
     const snapshot = h('canvas', { width: 240, height: 135 });
     const ctx = snapshot.getContext('2d');
@@ -446,6 +461,8 @@ const objectSplitOrder = [1, 0];
     if (!layer) return;
     if (cached === i) cached = -1;
     layers.delete(i);
+    pendingPosters.delete(layer.video);
+    posterObserver.unobserve(layer.video);
     layer.el.remove();
     layer.video.onerror = null;
     layer.video.removeAttribute('src');
@@ -597,7 +614,7 @@ const objectSplitOrder = [1, 0];
 /* ───────── dataset ───────── */
 (function data() {
   const lab = $('#datalab');
-  const img = h('img', { alt:'Human demonstration with a data glove' });
+  const img = h('img', { loading:'lazy', alt:'Human demonstration with a data glove' });
   const vid = auto(h('video', { muted:true, loop:true, playsinline:true, preload:'none' })); vid.muted = true;
   const rail = h('div', { class:'rail', role:'tablist', 'aria-label':'In-hand skills' });
   const hand = h('figure', {class:'data-human'}, img, h('figcaption', {text:'Human demonstration'}));
@@ -617,7 +634,7 @@ const objectSplitOrder = [1, 0];
     img.src = 'media/data/human_'+f+'.svg';
     img.alt = name+' demonstrated with a data glove';
     vid.setAttribute('aria-label', name+' retargeted to the robot hand');
-    vid.poster = 'media/data/'+f+'.jpg'; vid.src = 'media/data/'+f+'.mp4';
+    queuePoster(vid,'media/data/'+f+'.jpg'); vid.src = 'media/data/'+f+'.mp4';
     if (vid._vis && !vid._userPaused && !reduced) vid.play().catch(() => {});
     if (!reduced) for (const el of [img,vid]) {
       el.getAnimations().forEach(anim => anim.cancel());
