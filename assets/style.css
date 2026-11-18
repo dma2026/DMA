@@ -498,7 +498,7 @@ h3{margin:0;color:var(--ink);font-weight:600;letter-spacing:-.02em}
 .rx-options button{padding:6px 12px;font-size:12.5px;line-height:1.45}
 .rx-cards{gap:8px}
 .rx-card{--tone:#376e69;--glow:#dfede8;position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;min-width:145px;min-height:50px;padding:10px 17px 13px;border:1px solid #cddbd8aa;border-radius:13px;background:#ffffff65;font-size:15px;line-height:1.35;font-weight:550}
-.rx-card:nth-child(2){--tone:#73638c;--glow:#ece8f1}
+.rx-card[data-tone="1"]{--tone:#73638c;--glow:#ece8f1}
 .rx-card[aria-pressed=true],.rx-card:hover{color:var(--tone);border-color:color-mix(in srgb,var(--tone) 40%,white);background:linear-gradient(120deg,#fff,var(--glow))}
 .rx-card[aria-pressed=true]::after{content:"";position:absolute;left:16%;right:16%;bottom:4px;height:1.5px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--tone) 30%,var(--tone) 70%,transparent)}
 .rx-legend .rx-card::before{content:"";width:12px;height:3px;align-self:center;border-radius:2px;background:var(--tone)}
@@ -653,33 +653,4 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
  #datalab .datapair figcaption{font-size:12px}
  #datalab .arrow{flex-direction:column;font-size:9px}
  #datalab .arrow svg{width:27px;transform:none}
-}
-
-/* Comparison previews use the regular results bars, readings and method rows. */
-.rx-toolbar .rx-summary { cursor:default; }
-.rx-card.rx-summary { color:var(--tone); background:linear-gradient(120deg,#fff,var(--glow)); }
-.rx-paired .rx-measure,.rx-split-axis { display:grid; align-items:center; gap:var(--gap); min-width:0; grid-template-columns:minmax(0,1fr) var(--num-col); }
-.rx-paired.stacked { --split-name:3.5rem; }
-.rx-paired.stacked :is(.rx-row,.rx-axisrow) { grid-template-columns:var(--label-col) minmax(0,1fr); }
-.rx-paired.stacked .rx-row { padding-block:8px; row-gap:5px; }
-.rx-paired.stacked .rx-row > .rx-method { grid-row:span 2; }
-.rx-paired.stacked .rx-measure { grid-column:2; grid-template-columns:var(--split-name) minmax(0,1fr) var(--num-col); }
-.rx-paired.stacked .rx-axis { margin-left:calc(var(--split-name) + var(--gap)); margin-right:calc(var(--num-col) + var(--gap)); }
-.rx-split-name { color:var(--muted); font-size:12px; }
-.rx-paired.columns :is(.rx-row,.rx-axisrow) { grid-template-columns:var(--label-col) repeat(2,minmax(0,1fr)); }
-.rx-split-axis { grid-template-rows:auto auto; row-gap:6px; }
-.rx-split-axis:first-child { grid-column:2; }
-.rx-split-axis .rx-method,.rx-split-axis .rx-axis { grid-column:1; }
-.rx-twins { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(16px,2vw,32px); }
-.rx-twins > .rx-chart { min-width:0; --label-col:clamp(90px,9vw,144px); --num-col:clamp(75px,7.5vw,110px); --gap:9px; }
-.rx-twins h4 { margin:0 0 8px 12px; }
-@media(max-width:800px){
- .rx-paired.columns :is(.rx-measure,.rx-split-axis) { grid-template-columns:minmax(0,1fr); gap:4px; }
- .rx-paired.columns .rx-row { padding-block:6px; }
- .rx-twins { grid-template-columns:minmax(0,1fr); }
-}
-@media(max-width:560px){
- .rx-paired.stacked :is(.rx-row,.rx-axisrow){grid-template-columns:minmax(0,1fr);}
- .rx-paired.stacked :is(.rx-measure,.rx-axis),.rx-paired.stacked .rx-row > .rx-method {grid-column:1;grid-row:auto;}
- .rx-paired.columns .rx-axis span:nth-child(even):not(:last-child){visibility:hidden;}
 }

@@ -330,6 +330,9 @@ $('#duo').append(...MULTI.map(m => {
   return h('div', { class: 'duo-item' }, pl.el, h('h3', { text: m.title }), tl.el);
 }));
 
+// Data columns use 0 for training objects and 1 for unseen objects.
+const objectSplitOrder = [1, 0];
+
 /* Simulation references in the same row-major order as the overview film. */
 (function simulation() {
   const media = file => 'media/sim/references/' + file + '?v=soft1';
@@ -353,7 +356,7 @@ $('#duo').append(...MULTI.map(m => {
   const objectName = i => SIM[i][1];
   const groupNames = ['Training objects', 'Unseen tools'];
   const layers = new Map();
-  let group = 0, shown = -1, pinned = -1, timer, visible = false, paused = reduced;
+  let group = objectSplitOrder[0], shown = -1, pinned = -1, timer, visible = false, paused = reduced;
   const activeVideo = () => {
     const layer = layers.get(shown);
     return layer && !layer.video.error ? layer.video : overview;
@@ -506,7 +509,7 @@ $('#duo').append(...MULTI.map(m => {
     if (pinned === i) { reset(); return; }
     pinned = i;
     if (SIM[i][0] !== group) {
-      group = SIM[i][0]; groups.pick(group, true); buildRail();
+      group = SIM[i][0]; groups.pick(objectSplitOrder.indexOf(group), true); buildRail();
     }
     show(i);
   }
@@ -578,7 +581,8 @@ $('#duo').append(...MULTI.map(m => {
     }
     rail.replaceChildren(...rows); rail.scrollTop = rail.scrollLeft = 0;
   }
-  const groups = seg(tabs, groupNames, g => {
+  const groups = seg(tabs, objectSplitOrder.map(g => groupNames[g]), index => {
+    const g = objectSplitOrder[index];
     if (group !== g) { reset(); group = g; buildRail(); }
   }, { small: true, label: 'Object split' });
   grid.append(...SIM.map((_,i) => {
@@ -1015,11 +1019,9 @@ $('#duo').append(...MULTI.map(m => {
     SimToolReal: [.44, .43, .33, .31], DexTrack: [.06, .05, .04, .09],
     SPIDER: [.14, .17, .08, .05], 'Retarget replay': [.07, .05, .06, .04],
   };
-  const settings = studies.map(() => ({ metric: 0, split: 0 }));
+  const settings = studies.map((_, i) => ({ metric: 0, split: i === 1 ? 0 : objectSplitOrder[0] }));
   let study = 0, hour = ABL.size.pts.length - 1;
   let trendObserver;
-  const layout = new URLSearchParams(location.search).get('results');
-  const compare = ['a','b','c'].includes(layout);
   const dashboard = h('div', { class: 'rx-content' });
 
   function buttons(labels, current, label, cls, choose) {
@@ -1059,40 +1061,26 @@ $('#duo').append(...MULTI.map(m => {
     const metricName = study === 2 ? 'Success rate' : options[metric];
     const title = ['Comparison with baselines', 'Zero-shot tool use', 'Ablation study'][study];
     const labels = real ? ['Motion tracking', 'Teleoperation'] : ['Seen objects', 'Unseen objects'];
-    const sims = (r, s = split) => isError ? [r[4 + metric * 2 + s], errorSD[r[0]][(metric - 1) * 2 + s]] : [r[2 + s * 2], r[3 + s * 2]];
+    const sims = r => isError ? [r[4 + metric * 2 + split], errorSD[r[0]][(metric - 1) * 2 + split]] : [r[2 + split * 2], r[3 + split * 2]];
     const reference = sim ? simRows[0] : real ? REAL.at(-1) : scale ? ab.pts[hour] : ab.rows.at(-1);
     const intro = sim
       ? 'A single DMA policy tracks held-out motions on 34 training objects and nine unseen tools. It achieves the highest success rate and the lowest position error on both sets.'
       : real ? 'One policy performs six tasks with unseen tools. The robot completes every stage in 71.1% of trials when following recorded motions and 80.0% under live teleoperation.'
-      : compare ? [
-        'How does the choice of object representation affect tracking on seen and unseen objects?',
-        'Tracking success with three ways to sample starting states.',
-        'Tracking success under three conditions for applying the object reward.',
-        'Tracking success as training data increases from 1 to 40.1 hours on the same 34 objects.'
-      ][metric] : ablationIntro(ab, split);
+      : ablationIntro(ab, split);
     const header = h('div', { class: 'rx-head' }, h('h3', { text: title }), h('p', { text: intro }));
     const optionsBar = buttons(options, metric, study === 2 ? 'Ablation' : 'Metric', 'rx-options', i => {
       settings[study].metric = i; draw('.rx-options button[aria-pressed=true]');
     });
-    const cards = h('div', { class: scale ? 'rx-cards rx-legend' : 'rx-cards', role: 'group', 'aria-label': real ? 'Deployment mode' : 'Evaluation split' }, labels.map((label,i) =>
-      h('button', { type: 'button', class: 'rx-card', 'aria-pressed': i === split, 'aria-controls': 'rx-chart', onclick: () => {
+    const order = real ? [0, 1] : objectSplitOrder;
+    const cards = h('div', { class: scale ? 'rx-cards rx-legend' : 'rx-cards', role: 'group', 'aria-label': real ? 'Deployment mode' : 'Evaluation split' }, order.map(i =>
+      h('button', { type: 'button', class: 'rx-card', 'data-tone': i, 'aria-pressed': i === split, 'aria-controls': 'rx-chart', onclick: () => {
         settings[study].split = i; draw('.rx-card[aria-pressed=true]');
-      } }, label, real ? h('b', { title: 'Mean ' + metricName.toLowerCase(), text: reference[2+i*2+metric].toFixed(1)+'%' }) : sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(), text: reference[isError ? 4+metric*2+i : 2+i*2].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null)));
-    const paired = compare && !real;
-    const summaries = paired ? h('div', { class: 'rx-cards' + (scale ? ' rx-legend' : '') }, labels.map((label, i) =>
-      h('span', { class: 'rx-card rx-summary' }, label, sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(),
-        text: sims(reference,i)[0].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null))) : cards;
-    const toolbar = h('div', { class: 'rx-toolbar' }, summaries, optionsBar);
+      } }, labels[i], real ? h('b', { title: 'Mean ' + metricName.toLowerCase(), text: reference[2+i*2+metric].toFixed(1)+'%' }) : sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(), text: reference[isError ? 4+metric*2+i : 2+i*2].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null)));
+    const toolbar = h('div', { class: 'rx-toolbar' }, cards, optionsBar);
     const chart = h('div', { id: 'rx-chart', class: 'rx-chart', 'data-tone': split, role: 'group',
-      'aria-label': (paired ? labels.join(' and ') : labels[split]) + ' · ' + metricName });
+      'aria-label': labels[split] + ' · ' + metricName });
     if (scale) {
       chart.append(trend(ab.pts, split));
-    } else if (paired) {
-      const rows = (sim ? simRows : [...ab.rows].reverse()).map(r => ({
-        name: r[0], desc: r[1], own: r === reference,
-        pairs: sim ? [sims(r,0), sims(r,1)] : [r.slice(2,4), r.slice(4,6)]
-      }));
-      chart.append(pairedBars(rows, layout, isError ? 25 : 100, decimals, unit, labels));
     } else {
       const rows = sim ? simRows.map(r => ({ name: r[0], desc: r[1], own: r === reference, pair: sims(r) }))
         : real ? REAL.map(r => ({ name: r[0], own: r === reference, pair: [r[2+split*2+metric]],
@@ -1108,49 +1096,19 @@ $('#duo').append(...MULTI.map(m => {
     if (focus) dashboard.querySelector(focus)?.focus({ preventScroll: true });
   }
 
-  function pairedBars(rows, layout, max, decimals, unit, labels) {
-    if (layout === 'c') {
-      return h('div', { class: 'rx-twins' }, labels.map((label, s) =>
-        h('section', { class: 'rx-chart', 'data-tone': s, 'aria-label': label },
-          h('h4', { class: 'rx-method', text: label }),
-          bars(rows.map(row => ({ ...row, pair: row.pairs[s] })), max, decimals, unit))));
-    }
-    const columns = layout === 'b';
-    const axes = columns ? labels.map(label => h('div', { class: 'rx-split-axis' },
-      h('b', { class: 'rx-method', text: label }), barAxis(max))) : [barAxis(max)];
-    return h('div', { class: 'rx-bars rx-paired ' + (columns ? 'columns' : 'stacked') },
-      h('div', { class: 'rx-axisrow' }, ...axes),
-      rows.map(({ name, desc, own, pairs }) => h('div', { class: 'rx-row' + (own ? ' ours' : '') },
-        methodLabel(name,desc),
-        ...pairs.map((pair, s) => h('div', { class: 'rx-chart rx-measure', 'data-tone': s, role: 'group', 'aria-label': labels[s] },
-          columns ? null : h('span', { class: 'rx-split-name', text: s ? 'Unseen' : 'Seen' }),
-          barTrack(pair[0],max), barReading(pair,decimals,unit))))));
-  }
-
-  function barAxis(max) {
-    const ticks = max === 25 ? [0,5,10,15,20,25] : [0,25,50,75,100];
-    return h('div', { class: 'rx-axis', 'aria-hidden': 'true' }, ticks.map(n =>
-      h('span', { css: { left: (100*n/max) + '%' }, text: n })));
-  }
-
-  function methodLabel(name, desc, play) {
-    const label = play ? h('a', { href: '#level-2', onclick: play, title: 'Play ' + name }, name, h('span', { 'aria-hidden': true, text: ' ↗' })) : h('b', { text: name });
-    return h('div', { class: 'rx-method', title: desc }, label);
-  }
-
-  function barTrack(value, max) {
-    return h('div', { class: 'rx-track', 'aria-hidden': 'true' }, h('i', { css: { width: (100*value/max) + '%' } }));
-  }
-
-  function barReading([value, sd], decimals, unit) {
-    return h('div', { class: 'rx-reading' }, h('b', { text: value.toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }),
-      sd == null ? null : h('small', { text: '± ' + sd.toFixed(decimals) }));
-  }
-
   function bars(rows, max, decimals, unit) {
-    return h('div', { class: 'rx-bars' }, h('div', { class: 'rx-axisrow' }, barAxis(max)),
-      rows.map(({ name, desc, own, play, pair }) => h('div', { class: 'rx-row' + (own ? ' ours' : '') },
-        methodLabel(name,desc,play), barTrack(pair[0],max), barReading(pair,decimals,unit))));
+    const ticks = max === 25 ? [0,5,10,15,20,25] : [0,25,50,75,100];
+    const axis = h('div', { class: 'rx-axis', 'aria-hidden': 'true' }, ticks.map(n =>
+      h('span', { css: { left: (100*n/max) + '%' }, text: n })));
+    return h('div', { class: 'rx-bars' }, h('div', { class: 'rx-axisrow' }, axis),
+      rows.map(({ name, desc, own, play, pair: [value, sd] }) => {
+        const label = play ? h('a', { href: '#level-2', onclick: play, title: 'Play ' + name }, name, h('span', { 'aria-hidden': true, text: ' ↗' })) : h('b', { text: name });
+        return h('div', { class: 'rx-row' + (own ? ' ours' : '') },
+          h('div', { class: 'rx-method', title: desc }, label),
+          h('div', { class: 'rx-track', 'aria-hidden': 'true' }, h('i', { css: { width: (100*value/max) + '%' } })),
+          h('div', { class: 'rx-reading' }, h('b', { text: value.toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }),
+            sd == null ? null : h('small', { text: '± ' + sd.toFixed(decimals) })));
+      }));
   }
 
   function trend(pts, split) {
@@ -1174,7 +1132,7 @@ $('#duo').append(...MULTI.map(m => {
       svg.append(h('line', { class: 'rx-guide', x1: x(p[0]), x2: x(p[0]), y1: y(100), y2: y(0) }));
       [1-split,split].forEach(s => {
         const col = 1+2*s, coord = (r,k) => x(r[0])+','+y(r[col]+k*r[col+1]);
-        const group = h('g', { class: 'rx-series s'+s, opacity: compare || s === split ? 1 : .68 });
+        const group = h('g', { class: 'rx-series s'+s, opacity: s === split ? 1 : .68 });
         group.append(h('polygon', { points: [...pts.map(r => coord(r,1)), ...[...pts].reverse().map(r => coord(r,-1))].join(' ') }),
           h('polyline', { points: pts.map(r => coord(r,0)).join(' ') }),
           ...pts.map((r,i) => h('circle', { cx: x(r[0]), cy: y(r[col]), r: i === hour ? 5 : 3.4 })));
