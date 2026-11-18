@@ -10,7 +10,11 @@ html = page.read_text()
 assets = root / "assets"
 styles = (assets / "fonts/fonts.css").read_text().replace("url(font-", "url(assets/fonts/font-")
 styles += (assets / "style.css").read_text() + (assets / "hero-palettes.css").read_text()
+segments = (assets / "segmented.js").read_text().replace(
+    "/* manifest */ {}", (assets / "segments/manifest.json").read_text().strip()
+)
 for tag, element, source in [
+    ("script", "segmented-player", segments),
     ("script", "page-app", (assets / "app.js").read_text()),
     ("style", "page-style", styles),
 ]:

@@ -1209,6 +1209,10 @@ const objectSplitOrder = [1, 0];
 // Only warm the section the reader is actually viewing. In particular, anchor
 // navigation must not download all the videos between the current and target sections.
 (() => {
+  // Arm native controls without fetching any film bytes before Play.
+  const film=document.querySelector('#video video');
+  if (!film.paused) DMAMedia.play(film).catch(()=>{}); else DMAMedia.start(film);
+  film.addEventListener('play',()=>DMAMedia.start(film));
   const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
   const warm = id => {
     if (!DMAMedia.permits(id)) return;
@@ -1223,10 +1227,7 @@ const objectSplitOrder = [1, 0];
     }
     for (const group of groups[id] || []) {
       DMAMedia.warm(group);
-      if (group==='main') {
-        const film=document.querySelector('#video video');
-        film.preload='auto'; DMAMedia.start(film);
-      }
+
     }
   };
   function leavingHero() {

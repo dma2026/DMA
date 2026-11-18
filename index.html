@@ -6,11 +6,108 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-d1BHUFOVMNTko6wxYf3eakwAtsCVsStj5zO6UixQUeE=' 'sha256-AMaydD7E+Kg90hu2R5p1a7K1utSltC8mjJotmbmRBSc=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-DTmPjhR2LysRrR14P2H6V5mb0WN+PR4oeilrYIndJPM=' 'sha256-smJ3ylJohCLfQrWjFAw9cP4SjI8jYuziXkpZW/tor7o=' 'sha256-Q4RCfs1oEHLa0dDwj2In0gcvg4RrEh4ShbkoRaKvzPg=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<script id="segmented-player">/* A plain file GET per segment. The first file includes its initialization
+   bytes, so a cold player can decode it before any other response arrives. */
+const DMASegments = (() => {
+  const tracks = {"media/main/dma_r9.mp4":["b453936a8f7f",[0.0,0.267,1.2,3.733,6.267,8.333,10.867,13.4,15.933,16.667,19.2,21.733,24.267,25.0,27.533,30.067,32.6,33.333,35.867,38.4,40.933,41.667,44.2,46.733,49.267,50.0,52.533,55.067,57.6,58.333,60.867,63.4,65.933,66.667,69.2,71.733,74.267,75.0,77.533,80.067,82.6,83.333,85.867,88.4,90.933,91.667,94.2,96.733,99.267,100.0,102.533,105.067,107.6,108.333,110.867,113.4,115.933,116.667,119.2,121.733,124.267,125.0,127.533,130.067,132.6,133.333,135.867,138.4,140.933,141.667,144.2,146.733,149.267,150.0,152.533,155.067,157.6,158.333,160.867,163.4,165.933,166.667,169.2,171.733,174.267,175.0,177.533,180.067,182.6,183.333,185.867,188.4,190.933,191.667,194.2,196.733,199.267,200.0,202.533,205.067,207.6,208.333],[0,5,9,13,17,21,25,29,33,37,41,45,49,53,57,61,65,69,73,77,81,85,89,93,97,101]],"media/multi/screwdriver_bulb.mp4":["9270a73e73a7",[0.0,0.267,1.2,3.733,6.267,8.333,10.867,13.4,15.933,16.667,19.2,21.733,24.267,25.0,27.533,30.067,32.6,33.333,35.867,38.4,40.933,41.667,44.2,46.733,49.267,50.0,52.533,55.067,57.6,58.333,60.867,63.4,65.7,68.233,70.767,73.3,74.033,76.567,79.1,81.633,82.367,84.9,87.433,89.967,90.7,93.233],[0,5,9,13,17,21,25,29,32,36,40,44]],"media/multi/twrench_hammer.mp4":["4ccfbd043c1e",[0.0,0.267,1.2,3.733,6.267,8.333,10.867,13.4,15.933,16.667,19.2,21.733,24.267,25.0,27.533,30.067,32.6,33.333,35.867,38.4,40.933,41.667,44.2,46.733,49.267,50.0,52.533,55.067],[0,5,9,13,17,21,25]],"media/sim/references/01.mp4":["d1949cc64afe",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/02.mp4":["e0bf98d477fb",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/03.mp4":["535e5882fb43",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/04.mp4":["a4890157fcb7",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/05.mp4":["26575fdd3088",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/06.mp4":["701d48d1d420",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/07.mp4":["1d42f87591a6",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/08.mp4":["0255f34a5321",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/09.mp4":["88feb5306b40",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/10.mp4":["18343a269976",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/11.mp4":["248b6b7d00ba",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/12.mp4":["eafc60cf16b2",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/13.mp4":["260c24e20538",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/14.mp4":["6b8aa6d85ce1",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/15.mp4":["7eb85a729c92",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/16.mp4":["f1d2b4184d68",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/17.mp4":["e9a0a6971dad",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/18.mp4":["6d4629337c99",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/19.mp4":["fc2fcb4b2737",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/20.mp4":["1d18fc91af52",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/21.mp4":["81f2be41f8be",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/22.mp4":["ce3a05891e6b",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/23.mp4":["8fadd7e3b2b0",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/24.mp4":["58d7549cb572",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/25.mp4":["723c753bee32",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/26.mp4":["8a4445a778a0",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/27.mp4":["fdbfafc4fbea",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/28.mp4":["f6fbf163d081",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/29.mp4":["5a2eef83128c",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/30.mp4":["9fa023ce8759",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/31.mp4":["472c7c714b6d",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/32.mp4":["389101c1b4bb",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/33.mp4":["1a1e7e95f7c7",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/34.mp4":["7a6d77433545",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/35.mp4":["ed05712cb86c",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/36.mp4":["f034c33b2528",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/37.mp4":["830c4bbbbfb9",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/38.mp4":["83c711aa7e0f",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/39.mp4":["5f5cc82e4d8d",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/40.mp4":["27cbfcccbfde",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/41.mp4":["060b3406a459",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/42.mp4":["ee94febbcb1c",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/43.mp4":["eb327ae2c4ae",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/44.mp4":["e4426a019fea",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/45.mp4":["b44fecd198d4",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/46.mp4":["9577ef371e4e",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/47.mp4":["a2c0d2f79f50",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/48.mp4":["b811ad12559a",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]],"media/sim/references/overview.mp4":["f577dfa289b7",[0.0,0.267,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0],[0,2,3,4,5,6,7,8,9,10]]};
+  function attach(video, path, codec, duration, signal, fallback, jump, initialTime) {
+    const [folder, starts, keys] = tracks[path];
+    const media = new MediaSource();
+    const url = URL.createObjectURL(media);
+    let source, index = 0, next = 0, target = initialTime || 0, fetching = new Map();
+    if (target) {
+      for (const i of keys) if (starts[i] <= target) index = i;
+      next = index;
+    }
+    const base = 'assets/segments/' + folder + '/';
+    const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+    function buffered(t) {
+      for (let i=0; i<video.buffered.length; i++)
+        if (t >= video.buffered.start(i)-.09 && t < video.buffered.end(i)) return video.buffered.end(i);
+      return 0;
+    }
+    async function download(file) {
+      for (let attempt=0; ; attempt++) {
+        signal.throwIfAborted();
+        const request = new AbortController();
+        const cancel = () => request.abort();
+        signal.addEventListener('abort', cancel, {once:true});
+        const timeout = setTimeout(cancel, 5000 + attempt * 2500);
+        try {
+          const response = await fetch(base + file + '.m4s', {signal:request.signal,
+            priority:file==='init' || file===index ? 'high' : 'auto'});
+          if (!response.ok) throw Error('Video segment ' + response.status);
+          return await response.arrayBuffer();
+        } catch (error) {
+          if (signal.aborted || attempt>=2) throw error;
+        } finally {
+          clearTimeout(timeout);
+          signal.removeEventListener('abort',cancel);
+        }
+      }
+    }
+    function append(bytes) {
+      return new Promise((resolve,reject) => {
+        const abort = () => finish(false), done = () => finish(true);
+        function finish(ok) {
+          source.removeEventListener('updateend', done);
+          source.removeEventListener('error', abort);
+          signal.removeEventListener('abort', abort);
+          ok ? resolve() : reject(Error('Cannot append video segment'));
+        }
+        signal.addEventListener('abort',abort,{once:true});
+        source.addEventListener('updateend',done,{once:true});
+        source.addEventListener('error',abort,{once:true});
+        try { signal.throwIfAborted(); source.appendBuffer(bytes); } catch {abort();}
+      });
+    }
+    const seek = () => {
+      if (target || !source || buffered(video.currentTime)) return;
+      jump(video.currentTime);
+    };
+    video.addEventListener('seeking', seek, {signal});
+    video.addEventListener('error', fallback, {signal});
+    media.addEventListener('sourceopen', async () => {
+      try {
+        source = media.addSourceBuffer(codec);
+        media.duration = duration;
+        let init = index ? download('init') : null;
+        init?.catch(()=>{});
+        while (!signal.aborted && index < starts.length) {
+          // Preserve the native play control. Attaching a paused player fetches nothing.
+          if (!target && (document.hidden || video.paused || buffered(video.currentTime)-video.currentTime > 11)) {
+            await pause(80);
+            continue;
+          }
+          while (next<starts.length && next<index+3) {
+            const promise=download(next);
+            promise.catch(()=>{});
+            fetching.set(next++,promise);
+          }
+          if (init) { await append(await init); init=null; }
+          await append(await fetching.get(index));
+          fetching.delete(index++);
+          if (target && buffered(target)) {
+            const position = target;
+            target = 0;
+            video.currentTime = position;
+          }
+        }
+        if (!signal.aborted && media.readyState==='open') media.endOfStream();
+      } catch { if (!signal.aborted) fallback(); }
+    }, {once:true,signal});
+    return url;
+  }
+  return {has:path => Object.hasOwn(tracks,path), attach};
+})();
+</script>
 <script>/* Native playback handles cold clips and seeking. When a section's opening frames
    are in memory, feed those same frames to the decoder before the network reply. */
 const DMAMedia = (() => {
   const {clips, packs, chapters} = {"clips":{"media/data/fingertip_rotation.mp4":["data",0,97693,0,147330,"avc1.64001f",7.0,1029819],"media/data/in_palm_rotation.mp4":["data",97693,139003,147330,250074,"avc1.64002a",7.0,1669251],"media/data/pivoting.mp4":["data",236696,97676,397404,124692,"avc1.640028",7.0,956631],"media/data/rod_rotation.mp4":["data",334372,159225,522096,257752,"avc1.640032",7.0,1704138],"media/data/translation.mp4":["data",493597,155832,779848,240515,"avc1.640032",7.0,1464087],"media/main/dma_r9.mp4":["main",0,363132,0,227319,"avc1.640033",209.167,46069780],"media/method/teleop-bulb-masked.mp4":["method",0,50507,0,61342,"avc1.640015",8.0,369320],"media/multi/screwdriver_bulb.mp4":["l3",0,127346,0,84195,"avc1.64001f",95.0,7260023],"media/multi/twrench_hammer.mp4":["l3",127346,116718,84195,81036,"avc1.64001f",57.0,5192216],"media/prim/face_turn_cube.mp4":["l1",0,134807,0,155055,"avc1.64001f",12.0,1803138],"media/prim/reorientation_cuboid.mp4":["l1",134807,200060,155055,222932,"avc1.64001f",12.0,2359654],"media/prim/rotation_cylindrical_rod.mp4":["l1",334867,120961,377987,112010,"avc1.64001f",12.0,1433477],"media/prim/rotation_rectangular_rod.mp4":["l1",455828,138514,489997,130492,"avc1.64001f",12.0,1571320],"media/prim/translation_cylindrical_rod.mp4":["l1",594342,410584,620489,542270,"avc1.640028",12.0,5196166],"media/prim/translation_rectangular_rod.mp4":["l1",1004926,86629,1162759,79266,"avc1.64001f",12.0,1095330],"media/real/hammer_drive_nail.mp4":["l2",0,129452,0,76787,"avc1.640028",16.7,2502380],"media/real/hammer_pull_nail.mp4":["l2",129452,124228,76787,62793,"avc1.640028",26.0,3648184],"media/real/lightbulb_install.mp4":["l2",253680,119091,139580,75844,"avc1.640028",53.7,7046196],"media/real/screwdriver_tighten.mp4":["l2",372771,128374,215424,69845,"avc1.640028",36.2,5120021],"media/real/spray_bottle_water.mp4":["l2",501145,95121,285269,56016,"avc1.640028",37.7,4953006],"media/real/t_wrench_tighten.mp4":["l2",596266,100333,341285,80512,"avc1.640028",34.2,4305579],"media/reel/hammer_drive_nail.mp4":["hero",0,245498,0,186538,"avc1.640032",16.7,7705461],"media/reel/hammer_pull_nail.mp4":["hero",245498,400702,186538,321016,"avc1.640032",26.0,10767304],"media/reel/lightbulb_install.mp4":["hero",646200,389972,507554,387398,"avc1.640032",53.7,20709622],"media/reel/screwdriver_tighten.mp4":["hero",1036172,405405,894952,403359,"avc1.640032",36.2,14802251],"media/reel/spray_bottle_water.mp4":["hero",1441577,274969,1298311,249018,"avc1.640032",37.7,13126205],"media/reel/t_wrench_tighten.mp4":["hero",1716546,339236,1547329,355632,"avc1.640032",34.2,12651709],"media/sim/references/01.mp4":["sim",0,21811,0,36589,"avc1.64001f",10.0,352942],"media/sim/references/02.mp4":["sim",21811,21976,36589,34322,"avc1.64001f",10.0,345714],"media/sim/references/03.mp4":["sim",43787,26412,70911,43371,"avc1.64001f",10.0,469484],"media/sim/references/04.mp4":["sim",70199,19957,114282,33007,"avc1.64001f",10.0,312239],"media/sim/references/05.mp4":["sim",90156,27136,147289,40346,"avc1.64001f",10.0,405287],"media/sim/references/06.mp4":["sim",117292,23602,187635,34298,"avc1.64001f",10.0,353894],"media/sim/references/07.mp4":["sim",140894,23983,221933,35919,"avc1.64001f",10.0,355262],"media/sim/references/08.mp4":["sim",164877,21077,257852,32391,"avc1.64001f",10.0,330973],"media/sim/references/09.mp4":["sim",185954,25249,290243,41692,"avc1.64001f",10.0,430321],"media/sim/references/10.mp4":["sim",211203,19684,331935,32133,"avc1.64001f",10.0,331422],"media/sim/references/11.mp4":["sim",230887,23866,364068,43385,"avc1.64001f",10.0,406936],"media/sim/references/12.mp4":["sim",254753,24842,407453,43553,"avc1.64001f",10.0,392155],"media/sim/references/13.mp4":["sim",279595,28753,451006,42344,"avc1.64001f",10.0,447091],"media/sim/references/14.mp4":["sim",308348,24146,493350,37340,"avc1.64001f",10.0,362825],"media/sim/references/15.mp4":["sim",332494,23828,530690,43549,"avc1.64001f",10.0,428301],"media/sim/references/16.mp4":["sim",356322,23380,574239,41958,"avc1.64001f",10.0,402744],"media/sim/references/17.mp4":["sim",379702,28746,616197,45957,"avc1.64001f",10.0,455207],"media/sim/references/18.mp4":["sim",408448,24448,662154,37343,"avc1.64001f",10.0,380211],"media/sim/references/19.mp4":["sim",432896,23756,699497,43398,"avc1.64001f",10.0,396715],"media/sim/references/20.mp4":["sim",456652,17892,742895,24798,"avc1.64001f",10.0,308419],"media/sim/references/21.mp4":["sim",474544,29502,767693,50578,"avc1.64001f",10.0,493058],"media/sim/references/22.mp4":["sim",504046,22542,818271,35598,"avc1.64001f",10.0,332580],"media/sim/references/23.mp4":["sim",526588,20492,853869,31104,"avc1.64001f",10.0,282835],"media/sim/references/24.mp4":["sim",547080,22973,884973,35547,"avc1.64001f",10.0,332870],"media/sim/references/25.mp4":["sim",570053,19793,920520,32604,"avc1.64001f",10.0,321067],"media/sim/references/26.mp4":["sim",589846,19026,953124,30919,"avc1.64001f",10.0,321115],"media/sim/references/27.mp4":["sim",608872,20838,984043,29977,"avc1.64001f",10.0,309782],"media/sim/references/28.mp4":["sim",629710,23179,1014020,35555,"avc1.64001f",10.0,368178],"media/sim/references/29.mp4":["sim",652889,20012,1049575,30192,"avc1.64001f",10.0,292906],"media/sim/references/30.mp4":["sim",672901,16582,1079767,31400,"avc1.64001f",10.0,296337],"media/sim/references/31.mp4":["sim",689483,23047,1111167,32193,"avc1.64001f",10.0,328169],"media/sim/references/32.mp4":["sim",712530,21218,1143360,32651,"avc1.64001f",10.0,325869],"media/sim/references/33.mp4":["sim",733748,28193,1176011,33549,"avc1.64001f",10.0,327772],"media/sim/references/34.mp4":["sim",761941,25783,1209560,42481,"avc1.64001f",10.0,377774],"media/sim/references/35.mp4":["sim",787724,19559,1252041,26269,"avc1.64001f",10.0,267799],"media/sim/references/36.mp4":["sim",807283,31219,1278310,51093,"avc1.64001f",10.0,481488],"media/sim/references/37.mp4":["sim",838502,19810,1329403,28278,"avc1.64001f",10.0,298759],"media/sim/references/38.mp4":["sim",858312,25538,1357681,40158,"avc1.64001f",10.0,391315],"media/sim/references/39.mp4":["sim",883850,18011,1397839,26246,"avc1.64001f",10.0,244165],"media/sim/references/40.mp4":["sim",901861,17862,1424085,26376,"avc1.64001f",10.0,296029],"media/sim/references/41.mp4":["sim",919723,25990,1450461,46103,"avc1.64001f",10.0,409958],"media/sim/references/42.mp4":["sim",945713,23580,1496564,36314,"avc1.64001f",10.0,365511],"media/sim/references/43.mp4":["sim",969293,24980,1532878,36729,"avc1.64001f",10.0,363296],"media/sim/references/44.mp4":["sim",994273,14934,1569607,29339,"avc1.64001f",10.0,260593],"media/sim/references/45.mp4":["sim",1009207,14016,1598946,20225,"avc1.64001f",10.0,252163],"media/sim/references/46.mp4":["sim",1023223,19285,1619171,21940,"avc1.64001f",10.0,260342],"media/sim/references/47.mp4":["sim",1042508,18375,1641111,30032,"avc1.64001f",10.0,298346],"media/sim/references/48.mp4":["sim",1060883,18016,1671143,33227,"avc1.64001f",10.0,296204],"media/sim/references/overview.mp4":["sim",1078899,53359,1704370,80841,"avc1.640028",10.0,798766],"media/tele/direct_bulb.mp4":["why",0,190330,0,148082,"avc1.64001f",10.0,1470972],"media/tele/direct_hammer.mp4":["why",190330,179098,148082,117870,"avc1.64001f",8.5,1265778],"media/tele/hammer.mp4":["l2",696599,154455,421797,111090,"avc1.640028",22.0,3544515],"media/tele/lightbulb_large.mp4":["l2",851054,140239,532887,86141,"avc1.640028",42.7,6349764],"media/tele/lightbulb_small.mp4":["l2",991293,141826,619028,108778,"avc1.640028",36.5,5628530],"media/tele/screwdriver.mp4":["l2",1133119,147040,727806,89430,"avc1.640028",37.567,6308751],"media/tele/spray_bottle.mp4":["l2",1280159,128565,817236,80338,"avc1.640028",29.2,4484396],"media/tele/t_wrench.mp4":["l2",1408724,148659,897574,98175,"avc1.640028",44.7,7327555]},"packs":{"data":["data-first-bebbfb26.bin","data-next-cfa743df.bin"],"main":["main-first-f27360e7.bin","main-next-204ad56e.bin"],"method":["method-first-bf2866c7.bin","method-next-dc97c9e8.bin"],"l3":["l3-first-21002055.bin","l3-next-c4bb20c6.bin","l3-chapters-ce102013.bin"],"l1":["l1-first-e3773928.bin","l1-next-d51e347e.bin"],"l2":["l2-first-d604b098.bin","l2-next-a9bffc49.bin"],"hero":["hero-first-0215e489.bin","hero-next-90f8656c.bin"],"sim":["sim-first-66cc1901.bin","sim-next-cf1867f5.bin"],"why":["why-first-8fb7eaac.bin","why-next-342ce4e1.bin"]},"chapters":{"media/multi/screwdriver_bulb.mp4":[46,2885538,0,748874,"AAAAGGZ0eXBpc282AAACAGlzbzZtcDQxAAADCm1vb3YAAABsbXZoZAAAAAAAAAAAAAAAAAAAPAAAAAAAAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAINdHJhawAAAFx0a2hkAAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAUAAAAC0AAAAAABqW1kaWEAAAAgbWRoZAAAAAAAAAAAAAAAAAAAPAAAAAAAVcQAAAAAADFoZGxyAAAAAAAAAAB2aWRlAAAAAAAAAAAAAAAAQ29yZSBNZWRpYSBWaWRlbwAAAAFQbWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAABEHN0YmwAAADEc3RzZAAAAAAAAAABAAAAtGF2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAFAALQAEgAAABIAAAAAAAAAAEUTGF2YzYzLjEuMTAyIGxpYngyNjQAAAAAAAAAAAAAAAAY//8AAAA3YXZjQwFkAB//4QAbZ2QAH6zZQFAFumoCAgKAAAADAIAAAB4HjBjLAQAFaOvssiz9+PgAAAAAE2NvbHJuY2x4AAEAAQABAAAAABRidHJ0AAAAAAAeVYAAHlWAAAAAEHN0dHMAAAAAAAAAAAAAABBzdHNjAAAAAAAAAAAAAAAUc3RzegAAAAAAAAAAAAAAAAAAABBzdGNvAAAAAAAAAAAAAAAobXZleAAAACB0cmV4AAAAAAAAAAEAAAABAAAAAAAAAAAAAAAAAAAAYXVkdGEAAABZbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpcmFwcGwAAAAAAAAAAAAAAAAsaWxzdAAAACSpdG9vAAAAHGRhdGEAAAABAAAAAExhdmY2My4xLjEwMg=="],"media/multi/twrench_hammer.mp4":[28,2211190,748874,780792,"AAAAGGZ0eXBpc282AAACAGlzbzZtcDQxAAADCm1vb3YAAABsbXZoZAAAAAAAAAAAAAAAAAAAPAAAAAAAAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAINdHJhawAAAFx0a2hkAAAAAwAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAUAAAAC0AAAAAABqW1kaWEAAAAgbWRoZAAAAAAAAAAAAAAAAAAAPAAAAAAAVcQAAAAAADFoZGxyAAAAAAAAAAB2aWRlAAAAAAAAAAAAAAAAQ29yZSBNZWRpYSBWaWRlbwAAAAFQbWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAABEHN0YmwAAADEc3RzZAAAAAAAAAABAAAAtGF2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAFAALQAEgAAABIAAAAAAAAAAEUTGF2YzYzLjEuMTAyIGxpYngyNjQAAAAAAAAAAAAAAAAY//8AAAA3YXZjQwFkAB//4QAbZ2QAH6zZQFAFumoCAgKAAAADAIAAAB4HjBjLAQAFaOvssiz9+PgAAAAAE2NvbHJuY2x4AAEAAQABAAAAABRidHJ0AAAAAAAbwQAAG8EAAAAAEHN0dHMAAAAAAAAAAAAAABBzdHNjAAAAAAAAAAAAAAAUc3RzegAAAAAAAAAAAAAAAAAAABBzdGNvAAAAAAAAAAAAAAAobXZleAAAACB0cmV4AAAAAAAAAAEAAAABAAAAAAAAAAAAAAAAAAAAYXVkdGEAAABZbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAbWRpcmFwcGwAAAAAAAAAAAAAAAAsaWxzdAAAACSpdG9vAAAAHGRhdGEAAAABAAAAAExhdmY2My4xLjEwMg=="]}};
+  const coldStreams = {"media/prim/face_turn_cube.mp4":["assets/motion/face_turn_cube-c06f7005.mp4","avc1.64001f",1424989],"media/prim/reorientation_cuboid.mp4":["assets/motion/reorientation_cuboid-0daff358.mp4","avc1.64001f",2171584],"media/prim/rotation_cylindrical_rod.mp4":["assets/motion/rotation_cylindrical_rod-50a3b075.mp4","avc1.64001f",1141442],"media/prim/rotation_rectangular_rod.mp4":["assets/motion/rotation_rectangular_rod-d94d258d.mp4","avc1.64001f",1249755],"media/prim/translation_cylindrical_rod.mp4":["assets/motion/translation_cylindrical_rod-49c4a764.mp4","avc1.640028",3223430],"media/prim/translation_rectangular_rod.mp4":["assets/motion/translation_rectangular_rod-2056b477.mp4","avc1.64001f",878528]};
+  const openings = {"media/data/fingertip_rotation.mp4":["assets/motion/starts/7812e293ab8d6cfa.bin",245023],"media/data/in_palm_rotation.mp4":["assets/motion/starts/c523c23dd3507418.bin",389077],"media/data/pivoting.mp4":["assets/motion/starts/18a22f78dd51673a.bin",222368],"media/data/rod_rotation.mp4":["assets/motion/starts/ca2fe878596f9ebe.bin",416977],"media/data/translation.mp4":["assets/motion/starts/5b9757c7627620bb.bin",396347],"media/main/dma_r9.mp4":["assets/motion/starts/06d7f23f200b7a04.bin",590451],"media/method/teleop-bulb-masked.mp4":["assets/motion/starts/4ae75071cc560144.bin",111849],"media/multi/screwdriver_bulb.mp4":["assets/motion/starts/5f35af128f45d8fe.bin",211541],"media/multi/twrench_hammer.mp4":["assets/motion/starts/9027b23326c47f63.bin",197754],"media/prim/face_turn_cube.mp4":["assets/motion/starts/78ecda26d04cec85.bin",143604],"media/prim/reorientation_cuboid.mp4":["assets/motion/starts/413f99797d2dd01c.bin",245033],"media/prim/rotation_cylindrical_rod.mp4":["assets/motion/starts/7ce8e6cf8b28c7cf.bin",118327],"media/prim/rotation_rectangular_rod.mp4":["assets/motion/starts/5c09ba92dd975111.bin",129029],"media/prim/translation_cylindrical_rod.mp4":["assets/motion/starts/43a53be363b157aa.bin",337886],"media/prim/translation_rectangular_rod.mp4":["assets/motion/starts/df8db3499b6dc18c.bin",87957],"media/real/hammer_drive_nail.mp4":["assets/motion/starts/95af93318d0fefd8.bin",206239],"media/real/hammer_pull_nail.mp4":["assets/motion/starts/95b8246fd0dbf37e.bin",187021],"media/real/lightbulb_install.mp4":["assets/motion/starts/48c2604b52c3290c.bin",194935],"media/real/screwdriver_tighten.mp4":["assets/motion/starts/8e15194d06f059b4.bin",198219],"media/real/spray_bottle_water.mp4":["assets/motion/starts/0e2ae78b2d9b19dc.bin",151137],"media/real/t_wrench_tighten.mp4":["assets/motion/starts/7c4c2479be0410d8.bin",180845],"media/sim/references/01.mp4":["assets/motion/starts/2ee985f3de056729.bin",58400],"media/sim/references/02.mp4":["assets/motion/starts/7df9131e20f5a851.bin",56298],"media/sim/references/03.mp4":["assets/motion/starts/a14f3a8fd6915560.bin",69783],"media/sim/references/04.mp4":["assets/motion/starts/6d98e5c737d6ed33.bin",52964],"media/sim/references/05.mp4":["assets/motion/starts/72631fa73113b9d2.bin",67482],"media/sim/references/06.mp4":["assets/motion/starts/40c0d0502aaaec5e.bin",57900],"media/sim/references/07.mp4":["assets/motion/starts/99928a4f47166b00.bin",59902],"media/sim/references/08.mp4":["assets/motion/starts/62c2e5ebc9852f76.bin",53468],"media/sim/references/09.mp4":["assets/motion/starts/f5adcf7ac75873df.bin",66941],"media/sim/references/10.mp4":["assets/motion/starts/607f1d3f9ac2bb1d.bin",51817],"media/sim/references/11.mp4":["assets/motion/starts/9fa6ffb712ee574d.bin",67251],"media/sim/references/12.mp4":["assets/motion/starts/8179d1b17e99bc2c.bin",68395],"media/sim/references/13.mp4":["assets/motion/starts/53f8a04bced7b515.bin",71097],"media/sim/references/14.mp4":["assets/motion/starts/63a83149a5619f32.bin",61486],"media/sim/references/15.mp4":["assets/motion/starts/f49d9059e2daa3e3.bin",67377],"media/sim/references/16.mp4":["assets/motion/starts/eeaed7de4647ecc0.bin",65338],"media/sim/references/17.mp4":["assets/motion/starts/146eeec76d469686.bin",74703],"media/sim/references/18.mp4":["assets/motion/starts/40f6e14209b78f2e.bin",61791],"media/sim/references/19.mp4":["assets/motion/starts/9573563310711f92.bin",67154],"media/sim/references/20.mp4":["assets/motion/starts/6c41f800e94255a7.bin",42690],"media/sim/references/21.mp4":["assets/motion/starts/734c9765d8587a2c.bin",80080],"media/sim/references/22.mp4":["assets/motion/starts/13dd04d520b6747c.bin",58140],"media/sim/references/23.mp4":["assets/motion/starts/d6b3bba77e316789.bin",51596],"media/sim/references/24.mp4":["assets/motion/starts/76e347ddf2f41429.bin",58520],"media/sim/references/25.mp4":["assets/motion/starts/2ce6a68da3e3c1e5.bin",52397],"media/sim/references/26.mp4":["assets/motion/starts/ab560c2cb0dd369f.bin",49945],"media/sim/references/27.mp4":["assets/motion/starts/9ce7a71d02b00874.bin",50815],"media/sim/references/28.mp4":["assets/motion/starts/297fb90ec281a8a5.bin",58734],"media/sim/references/29.mp4":["assets/motion/starts/dc77ff5c91120702.bin",50204],"media/sim/references/30.mp4":["assets/motion/starts/66504b0e86e8d3fd.bin",47982],"media/sim/references/31.mp4":["assets/motion/starts/fc7ad3d96ef9f77f.bin",55240],"media/sim/references/32.mp4":["assets/motion/starts/a45a9b28d0897d67.bin",53869],"media/sim/references/33.mp4":["assets/motion/starts/0accd0f42a2d911c.bin",61742],"media/sim/references/34.mp4":["assets/motion/starts/d58c044631b6da3e.bin",68264],"media/sim/references/35.mp4":["assets/motion/starts/4323e87b7bfebaea.bin",45828],"media/sim/references/36.mp4":["assets/motion/starts/c8e642efdd03032a.bin",82312],"media/sim/references/37.mp4":["assets/motion/starts/1ebb34e44f1a696c.bin",48088],"media/sim/references/38.mp4":["assets/motion/starts/674c7e62b95d3b67.bin",65696],"media/sim/references/39.mp4":["assets/motion/starts/4d783c438dc0d664.bin",44257],"media/sim/references/40.mp4":["assets/motion/starts/11dc6894df760ddd.bin",44238],"media/sim/references/41.mp4":["assets/motion/starts/4063995b7956f5c0.bin",72093],"media/sim/references/42.mp4":["assets/motion/starts/018e784ae0b08eea.bin",59894],"media/sim/references/43.mp4":["assets/motion/starts/8f1dfb584fa3fd7f.bin",61709],"media/sim/references/44.mp4":["assets/motion/starts/1e33cd5cb2dec1ad.bin",44273],"media/sim/references/45.mp4":["assets/motion/starts/90fa9b2e90df5a50.bin",34241],"media/sim/references/46.mp4":["assets/motion/starts/b75145babe0be448.bin",41225],"media/sim/references/47.mp4":["assets/motion/starts/8e4afd1163e1f253.bin",48407],"media/sim/references/48.mp4":["assets/motion/starts/b6c25f19e46745bf.bin",51243],"media/sim/references/overview.mp4":["assets/motion/starts/e06f51693d327f2c.bin",134200],"media/tele/direct_bulb.mp4":["assets/motion/starts/bc618ec9a721d0c2.bin",338412],"media/tele/direct_hammer.mp4":["assets/motion/starts/e94a5527aed6686e.bin",296968],"media/tele/hammer.mp4":["assets/motion/starts/015643c80390a6bf.bin",265545],"media/tele/lightbulb_large.mp4":["assets/motion/starts/5c59aeac4485aa6e.bin",226380],"media/tele/lightbulb_small.mp4":["assets/motion/starts/19f27ede022e1b9c.bin",250604],"media/tele/screwdriver.mp4":["assets/motion/starts/09552f50dbee7c70.bin",236470],"media/tele/spray_bottle.mp4":["assets/motion/starts/dedbc498612f80cd.bin",208903],"media/tele/t_wrench.mp4":["assets/motion/starts/a5172a2e391eed99.bin",246834]};
   const cached = new Map();
   const active = new WeakMap();
   const progress = new EventTarget();
@@ -55,7 +152,7 @@ const DMAMedia = (() => {
     setTimeout(()=>{if(continuation){continuation.controller.abort();continuation=null;}},30000);
   }
   function warm(group) {
-    if (!window.MediaSource || navigator.connection?.saveData || !packs[group]) return;
+    if (['l3','sim','main'].includes(group) || !window.MediaSource || navigator.connection?.saveData || !packs[group]) return;
     const load = async file => {
       if (cached.has(file)) return cached.get(file).done;
       const record = {size: 0};
@@ -63,6 +160,12 @@ const DMAMedia = (() => {
       record.done = (async () => { try {
         const url='assets/start/'+file, store=await clipCache();
         const hit=await store?.match(url);
+        // Let an actively buffering clip use the connection before warming its neighbours.
+        while (!hit && [...document.querySelectorAll('video')].some(video => {
+          if (!['l1','l2'].includes(clips[video.dataset.clipPath]?.[0]) || video.paused || video.ended || document.hidden) return false;
+          const ahead = video.buffered.length ? video.buffered.end(video.buffered.length-1) - video.currentTime : 0;
+          return ahead < 3.5 && !(video.duration - video.currentTime < ahead + .15);
+        })) await new Promise(resolve=>setTimeout(resolve,250));
         const response=hit || await fetch(url,{priority:'low'});
         if (!response.ok) throw Error();
         const reader = response.body.getReader();
@@ -111,10 +214,35 @@ const DMAMedia = (() => {
     if ((!chapterTime && active.has(video)) || !window.MediaSource) return;
     const path = video.dataset.clipPath, info = clips[path];
     if (!info || (!chapterTime && video.dataset.native === path)) return;
-    const type = 'video/mp4; codecs="' + info[5] + '"';
-    if (!MediaSource.isTypeSupported(type)) return;
+    if (DMASegments.has(path)) {
+      const type = 'video/mp4; codecs="' + info[5] + '"';
+      if (!MediaSource.isTypeSupported(type)) return;
+      const resume = !video.paused;
+      dispose(video);
+      const controller = new AbortController();
+      const fallback = () => {
+        if (active.get(video)?.controller !== controller) return;
+        const position = video.currentTime || chapterTime || 0, playing = !video.paused;
+        dispose(video);
+        video.dataset.native = path;
+        video.src = path + version;
+        if (position) video.currentTime = position;
+        if (playing) video.play().catch(()=>{});
+      };
+      const url = DMASegments.attach(video,path,type,info[6],controller.signal,fallback,
+        position=>start(video,position),chapterTime);
+      active.set(video,{url,controller});
+      video.src=url;
+      if (resume) video.play().catch(()=>{});
+      return;
+    }
     const chapter = chapterTime && chapters[path];
     let first = chapter ? Uint8Array.from(atob(chapter[4]), c => c.charCodeAt(0)) : prefix(path, info, 0);
+    const variant = !first && !chapter && coldStreams[path];
+    const type = 'video/mp4; codecs="' + (variant ? variant[1] : info[5]) + '"';
+    if (!MediaSource.isTypeSupported(type)) return;
+    const continuous = info[0] === 'l1' || info[0] === 'l2';
+    const streamUrl = variant ? variant[0] : path + version;
     if (!chapter && (video.readyState >= 2 || video.currentTime > 0)) return;
     if (chapter) dispose(video);
     const media = new MediaSource(), controller = new AbortController();
@@ -163,7 +291,7 @@ const DMAMedia = (() => {
             if (t >= video.buffered.start(i)-.1 && t <= video.buffered.end(i)+.05) return;
           fallback();
         }, {signal});
-        const next = !chapter && prefix(path, info, 1);
+        const next = !variant && !chapter && prefix(path, info, 1);
         let offset = 0;
         if (first) {
           await append(first); offset = chapter ? chapter[1] : first.length;
@@ -176,14 +304,15 @@ const DMAMedia = (() => {
           }
           if (next) { await append(next); offset += next.length; }
         }
-        const total = info[7];
+        const total = variant ? variant[2] : info[7];
         // A selection can happen while its section pack is still downloading.
         // Use whichever arrives first, without ever appending the same byte twice.
         const available = () => {
-          if (chapter) return;
+          if (chapter || variant) return;
           if (offset === 0) return prefix(path,info,0);
           if (offset === info[2]) return prefix(path,info,1);
         };
+        let failures=0;
         while (!signal.aborted && offset < total) {
           const local = available();
           if (local) { await append(local); offset += local.length; continue; }
@@ -192,35 +321,82 @@ const DMAMedia = (() => {
           const begin=offset, request=early ? early.controller : new AbortController();
           const stop = () => request.abort();
           const packed = () => { if (offset===begin && available()) stop(); };
+          const unused = () => {if (continuous && (video.paused || document.hidden)) stop();};
+          let timer;
+          const suspend = () => {clearTimeout(timer); timer=setTimeout(unused,350);};
           signal.addEventListener('abort',stop,{once:true});
+          video.addEventListener('pause',suspend);
+          document.addEventListener('visibilitychange',suspend);
           progress.addEventListener(info[0],packed);
           try {
-            const budget = offset === 0 ? info[2] : 1024 * 1024;
-            const end = Math.min(total, offset + budget);
-            const response = early ? await early.promise : await fetch(path + version, {headers:{Range:`bytes=${offset}-${end-1}`}, signal:request.signal, priority:'high'});
-            if (response.status !== 200 && (response.status !== 206 || !response.headers.get('Content-Range')?.startsWith('bytes ' + offset + '-'))) throw Error('Range unavailable');
-            let skip = response.status === 200 ? offset : 0;
-            const reader = response.body.getReader();
+            const end=continuous ? total : Math.min(total, begin+(begin ? 1024*1024 : info[2]));
+            const headers=continuous && !begin ? {} : {Range:`bytes=${begin}-${continuous ? '' : end-1}`};
+            const receive = async () => {
+              const response=early ? await early.promise : await fetch(streamUrl,{headers,signal:request.signal,priority:'high'});
+              if (response.status>=500 || response.status===429) throw new TypeError('Temporary media response');
+              if (response.status!==200 && (response.status!==206 ||
+                  !response.headers.get('Content-Range')?.startsWith('bytes '+begin+'-'))) throw Error('Range unavailable');
+              const reader=response.body.getReader();
+              return {reader, packet:await reader.read(), base:response.status===200 ? 0 : begin};
+            };
+            const body=receive();
+            const open=continuous && begin===0 && openings[path];
+            if (open && !navigator.connection?.saveData) {
+              // A cold CDN can take longer to start a large object than a small static file.
+              // Whichever response delivers frames first feeds the same decoder.
+              const small=new AbortController(), cancel=()=>small.abort();
+              request.signal.addEventListener('abort',cancel,{once:true});
+              try {
+                const starter=fetch(open[0],{signal:small.signal,priority:'high'}).then(async r=>{
+                  if(!r.ok) throw Error('Opening unavailable');
+                  const reader=r.body.getReader();return {reader,packet:await reader.read()};
+                });
+                const opening=await Promise.any([body.then(()=>null),starter]);
+                if(opening) {
+                  let packet=opening.packet;
+                  try {
+                    while(!packet.done) {
+                      if(offset+packet.value.length>open[1]) throw Error('Invalid opening length');
+                      await append(packet.value);offset+=packet.value.length;
+                      packet=await opening.reader.read();
+                    }
+                  } catch(error) {
+                    if(request.signal.aborted || !offset) throw error;
+                    // The full response continues from the same byte position.
+                  }
+                }
+              } finally {cancel();request.signal.removeEventListener('abort',cancel);}
+            }
+            const source=await body;
+            let skip=offset-source.base, packet=source.packet;
             while (!signal.aborted) {
-              const {done,value}=await reader.read();
+              const {done,value}=packet;
               if (done) break;
               const discard=Math.min(value.length,skip);
               skip-=discard;
               if (discard<value.length) {
                 await append(value.subarray(discard)); offset+=value.length-discard;
+                if (continuous && video.paused && video.buffered.length &&
+                    video.buffered.end(video.buffered.length-1)-video.currentTime>2) stop();
               }
+              packet=await source.reader.read();
             }
-            if (offset<end) throw Error('Incomplete range');
+            if (offset<end) throw new TypeError('Interrupted stream');
           } catch (error) {
             if (signal.aborted) return;
-            if (request.signal.aborted) continue;
-            throw error;
+            if (!request.signal.aborted) {
+              if (!(error instanceof TypeError) || ++failures>2) throw error;
+              await new Promise(resolve=>setTimeout(resolve,150*failures));
+            }
           } finally {
+            clearTimeout(timer);
+            video.removeEventListener('pause',suspend);
+            document.removeEventListener('visibilitychange',suspend);
             signal.removeEventListener('abort',stop);
             progress.removeEventListener(info[0],packed);
           }
-          while (!signal.aborted && offset < total && video.buffered.length &&
-                 (video.paused || document.hidden || video.buffered.end(video.buffered.length-1) - video.currentTime > 6))
+          while (!signal.aborted && offset < total && (video.paused || document.hidden ||
+                 (!continuous && video.buffered.length && video.buffered.end(video.buffered.length-1)-video.currentTime>6)))
             await new Promise(resolve => setTimeout(resolve,250));
         }
         if (!signal.aborted && media.readyState === 'open') media.endOfStream();
@@ -2366,6 +2542,10 @@ const objectSplitOrder = [1, 0];
 // Only warm the section the reader is actually viewing. In particular, anchor
 // navigation must not download all the videos between the current and target sections.
 (() => {
+  // Arm native controls without fetching any film bytes before Play.
+  const film=document.querySelector('#video video');
+  if (!film.paused) DMAMedia.play(film).catch(()=>{}); else DMAMedia.start(film);
+  film.addEventListener('play',()=>DMAMedia.start(film));
   const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
   const warm = id => {
     if (!DMAMedia.permits(id)) return;
@@ -2380,10 +2560,7 @@ const objectSplitOrder = [1, 0];
     }
     for (const group of groups[id] || []) {
       DMAMedia.warm(group);
-      if (group==='main') {
-        const film=document.querySelector('#video video');
-        film.preload='auto'; DMAMedia.start(film);
-      }
+
     }
   };
   function leavingHero() {
