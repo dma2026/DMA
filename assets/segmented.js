@@ -36,32 +36,45 @@ const DMASegments = (() => {
         if (t >= video.buffered.start(i)-.09 && t < video.buffered.end(i)) return video.buffered.end(i);
       return 0;
     }
-    async function download(file, streamFirst=false, combined=false) {
-
+    async function download(file, streamFirst=false, combined=false, enqueue) {
+      let delivered = 0;
       for (let attempt=0; ; attempt++) {
         signal.throwIfAborted();
         const request = new AbortController();
         const cancel = () => request.abort();
         signal.addEventListener('abort', cancel, {once:true});
-        const timeout = setTimeout(cancel, 5000 + attempt * 2500);
+        let timeout;
+        // An active transfer may legitimately take longer than one retry interval.
+        const watchNetwork = () => {
+          clearTimeout(timeout);
+          timeout=setTimeout(cancel, 8000 + attempt*3000);
+        };
         try {
+          watchNetwork();
           const response = await fetch(base + file + '.m4s', {signal:request.signal,
             priority:file==='init' || streamFirst ? 'high' : 'auto'});
           if (!response.ok) throw Error('Video segment ' + response.status);
-          if (!streamFirst && !combined) return await response.arrayBuffer();
           const reader = response.body.getReader();
           let received=0;
           const remainder=[];
           while (true) {
+            watchNetwork();
             const {done,value} = await reader.read();
+            clearTimeout(timeout);
             if (done) break;
-            const n = combined ? Math.min(value.length,Math.max(0,overlap[1]-received)) : value.length;
+            const n = combined ? Math.min(value.length,Math.max(0,overlap[1]-received)) : streamFirst ? value.length : 0;
             if (n) await offerHead(received,value.subarray(0,n));
-            if (n<value.length) remainder.push(value.slice(n));
+            const skip=Math.max(n,delivered-received);
+            if (skip<value.length) {
+              const part=value.subarray(skip);
+              if (enqueue) enqueue(part);
+              else remainder.push(part);
+              if (enqueue) delivered=received+value.length;
+            }
             received+=value.length;
           }
           if (combined && received<=overlap[1]) throw Error('Incomplete combined segment');
-          return combined ? new Blob(remainder).arrayBuffer() : null;
+          return remainder.length ? new Blob(remainder).arrayBuffer() : null;
         } catch (error) {
           if (signal.aborted || attempt>=2) throw error;
         } finally {
@@ -69,6 +82,17 @@ const DMASegments = (() => {
           signal.removeEventListener('abort',cancel);
         }
       }
+    }
+    // Download upcoming segments concurrently, but hand bytes to the decoder in
+    // timeline order. The segment at the playhead can be decoded while it arrives.
+    function pendingSegment(i) {
+      const combined=raceOpening && i===1;
+      return new ReadableStream({start(controller) {
+        const transfer=download(combined ? overlap[0] : files[i],i===0,combined,
+                                bytes=>controller.enqueue(bytes));
+        const ready=raceOpening && i===0 ? Promise.race([transfer,headReady]) : transfer;
+        ready.then(()=>controller.close(),error=>controller.error(error));
+      }});
     }
     function append(bytes) {
       return new Promise((resolve,reject) => {
@@ -100,20 +124,21 @@ const DMASegments = (() => {
         if (target) video.currentTime=target;
         while (!signal.aborted && index < files.length) {
           // Preserve the native play control. Attaching a paused player fetches nothing.
-          if (!target && (document.hidden || video.paused || buffered(video.currentTime)-video.currentTime > 11)) {
+          if (!target && (document.hidden || video.paused || buffered(video.currentTime)-video.currentTime > (navigator.connection?.saveData ? 11 : 30))) {
             await pause(40);
             continue;
           }
           while (next<files.length && next<index+3) {
-            const combined=raceOpening && next===1;
-            const transfer=download(combined ? overlap[0] : files[next],next===0,combined);
-            const promise=raceOpening && next===0 ? Promise.race([transfer,headReady]) : transfer;
-            promise.catch(()=>{});
-            fetching.set(next++,promise);
+            fetching.set(next,pendingSegment(next));
+            next++;
           }
           if (init) { await append(await init); init=null; }
-          const bytes = await fetching.get(index);
-          if (bytes) await append(bytes);
+          const reader=fetching.get(index).getReader();
+          while (!signal.aborted) {
+            const {value,done}=await reader.read();
+            if (done) break;
+            await append(value);
+          }
           fetching.delete(index++);
           if (target && buffered(target)) {
             const position = target;

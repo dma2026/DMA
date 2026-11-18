@@ -1247,7 +1247,7 @@ const objectSplitOrder = [1, 0];
         timers.set(target,setTimeout(()=>warm(target.id),delay));
       }
     }
-  }, {rootMargin:'65% 0px'});
+  }, {rootMargin:'0px'});
   for(const id of Object.keys(groups)) observer.observe(document.getElementById(id));
   for(const a of document.querySelectorAll('a[href^="#"]')) {
     const id=a.hash.slice(1);
