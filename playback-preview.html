@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-zC+wZw/JGR7Y8s+m64MLf3cMsoRMX71VvDZnlCqjJ0s=' 'sha256-AMaydD7E+Kg90hu2R5p1a7K1utSltC8mjJotmbmRBSc=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-urDq0bIAMzyRXZPmv6zo6vmAcOq7fL+G7ts6CT8R3Ps=' 'sha256-AMaydD7E+Kg90hu2R5p1a7K1utSltC8mjJotmbmRBSc=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script>/* Native playback handles cold clips and seeking. When a section's opening frames
    are in memory, feed those same frames to the decoder before the network reply. */
 const DMAMedia = (() => {
@@ -51,7 +51,7 @@ const DMAMedia = (() => {
       !matchMedia('(prefers-reduced-motion: reduce)').matches && !navigator.connection?.saveData &&
       window.MediaSource?.isTypeSupported('video/mp4; codecs="'+clips[firstClip][5]+'"')) {
     const offset=clips[firstClip][2], controller=new AbortController();
-    const promise=fetch(firstClip+version,{headers:{Range:`bytes=${offset}-`},signal:controller.signal,priority:'high'});
+    const promise=fetch(firstClip+version,{headers:{Range:`bytes=${offset}-${offset+1048575}`},signal:controller.signal,priority:'high'});
     promise.catch(()=>{});
     continuation={promise,controller};
     setTimeout(()=>{if(continuation){continuation.controller.abort();continuation=null;}},30000);
@@ -67,7 +67,7 @@ const DMAMedia = (() => {
         const hit=await store?.match(url);
         // Let an actively buffering clip use the connection before warming its neighbours.
         while (!hit && [...document.querySelectorAll('video')].some(video => {
-          if (video.paused || video.ended || document.hidden) return false;
+          if (!['l1','l2'].includes(clips[video.dataset.clipPath]?.[0]) || video.paused || video.ended || document.hidden) return false;
           const ahead = video.buffered.length ? video.buffered.end(video.buffered.length-1) - video.currentTime : 0;
           return ahead < 3.5 && !(video.duration - video.currentTime < ahead + .15);
         })) await new Promise(resolve=>setTimeout(resolve,250));
@@ -124,6 +124,7 @@ const DMAMedia = (() => {
     const variant = !first && !chapter && coldStreams[path];
     const type = 'video/mp4; codecs="' + (variant ? variant[1] : info[5]) + '"';
     if (!MediaSource.isTypeSupported(type)) return;
+    const continuous = info[0] === 'l1' || info[0] === 'l2';
     const streamUrl = variant ? variant[0] : path + version;
     if (!chapter && (video.readyState >= 2 || video.currentTime > 0)) return;
     if (chapter) dispose(video);
@@ -203,7 +204,7 @@ const DMAMedia = (() => {
           const begin=offset, request=early ? early.controller : new AbortController();
           const stop = () => request.abort();
           const packed = () => { if (offset===begin && available()) stop(); };
-          const unused = () => {if (video.paused || document.hidden) stop();};
+          const unused = () => {if (continuous && (video.paused || document.hidden)) stop();};
           let timer;
           const suspend = () => {clearTimeout(timer); timer=setTimeout(unused,350);};
           signal.addEventListener('abort',stop,{once:true});
@@ -211,7 +212,8 @@ const DMAMedia = (() => {
           document.addEventListener('visibilitychange',suspend);
           progress.addEventListener(info[0],packed);
           try {
-            const headers=offset ? {Range:`bytes=${offset}-`} : {};
+            const end=continuous ? total : Math.min(total, begin+(begin ? 1024*1024 : info[2]));
+            const headers=continuous && !begin ? {} : {Range:`bytes=${begin}-${continuous ? '' : end-1}`};
             const receive = async () => {
               const response=early ? await early.promise : await fetch(streamUrl,{headers,signal:request.signal,priority:'high'});
               if (response.status>=500 || response.status===429) throw new TypeError('Temporary media response');
@@ -221,7 +223,7 @@ const DMAMedia = (() => {
               return {reader, packet:await reader.read(), base:response.status===200 ? 0 : begin};
             };
             const body=receive();
-            const open=begin===0 && openings[path];
+            const open=continuous && begin===0 && openings[path];
             if (open && new URLSearchParams(location.search).get('open')==='short' && !navigator.connection?.saveData) {
               // A cold CDN can take longer to start a large object than a small static file.
               // Whichever response delivers frames first feeds the same decoder.
@@ -257,12 +259,12 @@ const DMAMedia = (() => {
               skip-=discard;
               if (discard<value.length) {
                 await append(value.subarray(discard)); offset+=value.length-discard;
-                if (video.paused && video.buffered.length &&
+                if (continuous && video.paused && video.buffered.length &&
                     video.buffered.end(video.buffered.length-1)-video.currentTime>2) stop();
               }
               packet=await source.reader.read();
             }
-            if (offset<total) throw new TypeError('Interrupted stream');
+            if (offset<end) throw new TypeError('Interrupted stream');
           } catch (error) {
             if (signal.aborted) return;
             if (!request.signal.aborted) {
@@ -276,7 +278,8 @@ const DMAMedia = (() => {
             signal.removeEventListener('abort',stop);
             progress.removeEventListener(info[0],packed);
           }
-          while (!signal.aborted && offset < total && (video.paused || document.hidden))
+          while (!signal.aborted && offset < total && (video.paused || document.hidden ||
+                 (!continuous && video.buffered.length && video.buffered.end(video.buffered.length-1)-video.currentTime>6)))
             await new Promise(resolve => setTimeout(resolve,250));
         }
         if (!signal.aborted && media.readyState === 'open') media.endOfStream();
