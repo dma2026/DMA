@@ -1,5 +1,6 @@
 /* DexMimicAnything project page. Static, no dependencies. All numbers come from the paper (main_ral.tex). */
 'use strict';
+DMAMedia.navigate(location.hash.slice(1));
 const $ = (s, r = document) => r.querySelector(s);
 const NS = 'http://www.w3.org/2000/svg';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1205,31 +1206,36 @@ const objectSplitOrder = [1, 0];
 })();
 
 
-// Warm the openings of selectable clips as the reader approaches their section.
+// Only warm the section the reader is actually viewing. In particular, anchor
+// navigation must not download all the videos between the current and target sections.
 (() => {
   const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
-  const warm = id => (groups[id] || []).forEach(group=>{
-    DMAMedia.warm(group);
-    if (group==='main') {
-      const film=document.querySelector('#video video');
-      film.preload='auto';
-      DMAMedia.start(film);
+  const warm = id => {
+    if (!DMAMedia.permits(id)) return;
+    for (const group of groups[id] || []) {
+      DMAMedia.warm(group);
+      if (group==='main') {
+        const film=document.querySelector('#video video');
+        film.preload='auto'; DMAMedia.start(film);
+      }
     }
-  });
-  const observer = new IntersectionObserver(entries => {
-    for (const {target,isIntersecting} of entries) if (isIntersecting) {
-      warm(target.id); observer.unobserve(target);
+  };
+  const timers=new Map();
+  const observer = new IntersectionObserver(entries=>{
+    for(const {target,isIntersecting} of entries) {
+      clearTimeout(timers.get(target));
+      if(isIntersecting) timers.set(target,setTimeout(()=>warm(target.id),target.id==='top'?1400:160));
     }
-  }, {rootMargin:'650px 0px'});
-  function observe() { for (const id of Object.keys(groups)) observer.observe(document.getElementById(id)); }
-  if (location.hash || reduced) observe();
-  else {
-    const hero = document.getElementById('hero-video');
-    if (hero.currentTime > 0) observe();
-    else {hero.addEventListener('playing',observe,{once:true}); setTimeout(observe,3500);}
+  }, {rootMargin:'-4% 0px'});
+  for(const id of Object.keys(groups)) observer.observe(document.getElementById(id));
+  for(const a of document.querySelectorAll('a[href^="#"]')) {
+    const id=a.hash.slice(1);
+    a.addEventListener('click',()=>{DMAMedia.navigate(id);warm(id);});
+    a.addEventListener('focus',()=>warm(id));
   }
-  for (const a of document.querySelectorAll('a[href^="#"]')) {
-    for (const event of ['pointerenter','focus','pointerdown']) a.addEventListener(event,()=>warm(a.hash.slice(1)),{once:true});
+  if(location.hash) {
+    const target=document.getElementById(location.hash.slice(1));
+    target?.scrollIntoView({behavior:'instant'});
+    warm(target?.id);
   }
-
 })();
