@@ -1079,8 +1079,10 @@ $('#duo').append(...MULTI.map(m => {
         settings[study].split = i; draw('.rx-card[aria-pressed=true]');
       } }, label, real ? h('b', { title: 'Mean ' + metricName.toLowerCase(), text: reference[2+i*2+metric].toFixed(1)+'%' }) : sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(), text: reference[isError ? 4+metric*2+i : 2+i*2].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null)));
     const paired = compare && !real;
-    const key = scale && paired ? h('div', { class: 'rx-compare-legend' }, labels.map((name,i) => h('span', { class: i ? 'unseen' : 'seen', text: name }))) : null;
-    const toolbar = h('div', { class: 'rx-toolbar' }, paired ? key : cards, optionsBar);
+    const summaries = paired ? h('div', { class: 'rx-cards' + (scale ? ' rx-legend' : '') }, labels.map((label, i) =>
+      h('span', { class: 'rx-card rx-summary' }, label, sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(),
+        text: sims(reference,i)[0].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null))) : cards;
+    const toolbar = h('div', { class: 'rx-toolbar' }, summaries, optionsBar);
     const chart = h('div', { id: 'rx-chart', class: 'rx-chart', 'data-tone': split, role: 'group',
       'aria-label': (paired ? labels.join(' and ') : labels[split]) + ' · ' + metricName });
     if (scale) {
@@ -1090,7 +1092,7 @@ $('#duo').append(...MULTI.map(m => {
         name: r[0], desc: r[1], own: r === reference,
         pairs: sim ? [sims(r,0), sims(r,1)] : [r.slice(2,4), r.slice(4,6)]
       }));
-      chart.append(pairedBars(rows, layout, isError ? 25 : 100, decimals, unit));
+      chart.append(pairedBars(rows, layout, isError ? 25 : 100, decimals, unit, labels));
     } else {
       const rows = sim ? simRows.map(r => ({ name: r[0], desc: r[1], own: r === reference, pair: sims(r) }))
         : real ? REAL.map(r => ({ name: r[0], own: r === reference, pair: [r[2+split*2+metric]],
@@ -1106,50 +1108,49 @@ $('#duo').append(...MULTI.map(m => {
     if (focus) dashboard.querySelector(focus)?.focus({ preventScroll: true });
   }
 
-  function pairedBars(rows, layout, max, decimals, unit) {
-    const labels = ['Seen objects', 'Unseen objects'];
-    const pct = value => (100 * value / max) + '%';
-    const label = (pair, s) => h('span', { class: 'pc-value tone' + s,
-      'aria-label': labels[s] + ': ' + pair[0].toFixed(decimals) + ' ' + unit + (pair[1] == null ? '' : ', SD ' + pair[1].toFixed(decimals)) },
-      h('b', { text: pair[0].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }),
-      pair[1] == null ? null : h('small', { text: ' ± ' + pair[1].toFixed(decimals) }));
-    const lane = (pair, s) => h('span', { class: 'pc-lane tone' + s, 'aria-hidden': true },
-      h('i', { css: { width: pct(pair[0]) } }));
-    const legend = labels.map((name, s) => h('span', { class: 'pc-key tone' + s, text: name }));
-    const axis = h('div', { class: 'pc-axis' }, [0, max/2, max].map(v => h('span', { text: v + (unit === 'mm' ? ' mm' : unit) })));
-    const head = h('div', { class: 'pc-head' }, h('span', { text: 'Method' }),
-      ...(layout === 'b' ? legend : layout === 'c' ? [axis, ...legend] : [axis, h('span', { class: 'pc-keys' }, legend)]));
-    return h('div', { class: 'pc pc-' + layout }, head, rows.map(({ name, desc, own, pairs }) => {
-      const title = h('b', { class: 'pc-method', title: desc, text: name });
-      let content;
-      if (layout === 'b') {
-        content = pairs.map((pair, s) => h('div', { class: 'pc-column' }, label(pair,s), lane(pair,s)));
-      } else if (layout === 'c') {
-        const values = pairs.map(pair => pair[0]);
-        const plot = h('div', { class: 'pc-range', 'aria-hidden': true },
-          h('i', { css: { left: pct(Math.min(...values)), width: pct(Math.abs(values[0]-values[1])) } }),
-          values.map((v,s) => h('span', { class: 'pc-dot tone' + s, css: { left: pct(v) } })));
-        content = [plot, ...pairs.map(label)];
-      } else {
-        content = [h('div', { class: 'pc-stack' }, pairs.map(lane)), h('div', { class: 'pc-stack' }, pairs.map(label))];
-      }
-      return h('div', { class: 'pc-row' + (own ? ' own' : '') }, title, ...content);
-    }));
+  function pairedBars(rows, layout, max, decimals, unit, labels) {
+    if (layout === 'c') {
+      return h('div', { class: 'rx-twins' }, labels.map((label, s) =>
+        h('section', { class: 'rx-chart', 'data-tone': s, 'aria-label': label },
+          h('h4', { class: 'rx-method', text: label }),
+          bars(rows.map(row => ({ ...row, pair: row.pairs[s] })), max, decimals, unit))));
+    }
+    const columns = layout === 'b';
+    const axes = columns ? labels.map(label => h('div', { class: 'rx-split-axis' },
+      h('b', { class: 'rx-method', text: label }), barAxis(max))) : [barAxis(max)];
+    return h('div', { class: 'rx-bars rx-paired ' + (columns ? 'columns' : 'stacked') },
+      h('div', { class: 'rx-axisrow' }, ...axes),
+      rows.map(({ name, desc, own, pairs }) => h('div', { class: 'rx-row' + (own ? ' ours' : '') },
+        methodLabel(name,desc),
+        ...pairs.map((pair, s) => h('div', { class: 'rx-chart rx-measure', 'data-tone': s, role: 'group', 'aria-label': labels[s] },
+          columns ? null : h('span', { class: 'rx-split-name', text: s ? 'Unseen' : 'Seen' }),
+          barTrack(pair[0],max), barReading(pair,decimals,unit))))));
+  }
+
+  function barAxis(max) {
+    const ticks = max === 25 ? [0,5,10,15,20,25] : [0,25,50,75,100];
+    return h('div', { class: 'rx-axis', 'aria-hidden': 'true' }, ticks.map(n =>
+      h('span', { css: { left: (100*n/max) + '%' }, text: n })));
+  }
+
+  function methodLabel(name, desc, play) {
+    const label = play ? h('a', { href: '#level-2', onclick: play, title: 'Play ' + name }, name, h('span', { 'aria-hidden': true, text: ' ↗' })) : h('b', { text: name });
+    return h('div', { class: 'rx-method', title: desc }, label);
+  }
+
+  function barTrack(value, max) {
+    return h('div', { class: 'rx-track', 'aria-hidden': 'true' }, h('i', { css: { width: (100*value/max) + '%' } }));
+  }
+
+  function barReading([value, sd], decimals, unit) {
+    return h('div', { class: 'rx-reading' }, h('b', { text: value.toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }),
+      sd == null ? null : h('small', { text: '± ' + sd.toFixed(decimals) }));
   }
 
   function bars(rows, max, decimals, unit) {
-    const ticks = max === 25 ? [0,5,10,15,20,25] : [0,25,50,75,100];
-    const axis = h('div', { class: 'rx-axis', 'aria-hidden': 'true' }, ticks.map(n =>
-      h('span', { css: { left: (100*n/max) + '%' }, text: n })));
-    return h('div', { class: 'rx-bars' }, h('div', { class: 'rx-axisrow' }, axis),
-      rows.map(({ name, desc, own, play, pair: [value, sd] }) => {
-        const label = play ? h('a', { href: '#level-2', onclick: play, title: 'Play ' + name }, name, h('span', { 'aria-hidden': true, text: ' ↗' })) : h('b', { text: name });
-        return h('div', { class: 'rx-row' + (own ? ' ours' : '') },
-          h('div', { class: 'rx-method', title: desc }, label),
-          h('div', { class: 'rx-track', 'aria-hidden': 'true' }, h('i', { css: { width: (100*value/max) + '%' } })),
-          h('div', { class: 'rx-reading' }, h('b', { text: value.toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }),
-            sd == null ? null : h('small', { text: '± ' + sd.toFixed(decimals) })));
-      }));
+    return h('div', { class: 'rx-bars' }, h('div', { class: 'rx-axisrow' }, barAxis(max)),
+      rows.map(({ name, desc, own, play, pair }) => h('div', { class: 'rx-row' + (own ? ' ours' : '') },
+        methodLabel(name,desc,play), barTrack(pair[0],max), barReading(pair,decimals,unit))));
   }
 
   function trend(pts, split) {
