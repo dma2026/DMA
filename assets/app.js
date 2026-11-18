@@ -248,9 +248,9 @@ function stageStrip(cls, pl) {
     chips.forEach((c, j) => { c.setAttribute('aria-selected', j === cur); c.classList.toggle('done', j < cur); c.style.setProperty('--p', 0); });
     name.textContent = label;
     // The reel loads each clip under its own URL (?reel) so it is never queued behind a section player's request for the same file.
-    if (vid.getAttribute('src') === `media/real/${f}.mp4?reel`) { frame(); play(); return; }
+    if (vid.getAttribute('src') === `media/real/${f}.mp4?reel&v=900p1`) { frame(); play(); return; }
     stage.classList.add('swap');
-    setTimeout(() => { vid.poster = `media/real/${f}.jpg`; vid.src = `media/real/${f}.mp4?reel`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
+    setTimeout(() => { vid.poster = `media/real/${f}.jpg`; vid.src = `media/real/${f}.mp4?reel&v=900p1`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
     const next = REEL[(cur + 1) % REEL.length][0]; new Image().src = `media/real/${next}.jpg`;
   }
   vid.addEventListener('timeupdate', () => chips[cur]?.style.setProperty('--p', vid.currentTime / (vid.duration || 1)));
@@ -273,7 +273,7 @@ function stageStrip(cls, pl) {
   b.addEventListener('ended', () => { a.currentTime = 0; b.currentTime = 0; if (b._vis) { a.play().catch(() => {}); b.play().catch(() => {}); } });
   function load(i) {
     cur = WHY[i]; ta.textContent = cur.aTag; tb.textContent = cur.bTag; ta.classList.remove('show'); tb.classList.remove('show');
-    a.poster = cur.a + '.jpg'; a.src = cur.a + '.mp4'; b.poster = cur.b + '.jpg'; b.src = cur.b + '.mp4';
+    a.poster = cur.a + '.jpg'; a.src = cur.a + '.mp4'; b.poster = cur.b + '.jpg'; b.src = cur.b + '.mp4?v=900p1';
     if (a._vis && !reduced) { a.play().catch(() => {}); b.play().catch(() => {}); }
   }
   seg($('#why-tabs'), WHY.map(w => w.name), load, { label: 'Tool' });
@@ -294,7 +294,7 @@ function deck(host, { modes, onReady }) {
     const m = modes[mode], it = m.items[i];
     const tabs = rail.querySelectorAll('[role=tab]');
     tabs.forEach((b, j) => b.setAttribute('aria-selected', i === j));
-    pl.setTag(it.tag || m.tag); pl.load(`${m.dir}/${it.f}.mp4`, `${m.dir}/${it.f}.jpg`);
+    pl.setTag(it.tag || m.tag); pl.load(`${m.dir}/${it.f}.mp4${m.dir === 'media/prim' ? '' : '?v=900p1'}`, `${m.dir}/${it.f}.jpg`);
     strip.set(it.stages);
   }
   function setMode(k, keepId) {
@@ -335,7 +335,7 @@ const objectSplitOrder = [1, 0];
 
 /* Simulation references in the same row-major order as the overview film. */
 (function simulation() {
-  const media = file => 'media/sim/references/' + file + '?v=soft1';
+  const media = file => 'media/sim/references/' + file + (file.endsWith('.mp4') ? '?v=soft2' : '?v=soft1');
   const root = $('#sim-root');
   const files = SIM.map((_, i) => String(i + 1).padStart(2, '0'));
   const label = i => [files[i], SIM[i][1], SIM[i][3], SIM[i][2]].filter(Boolean).join(' · ');
@@ -598,7 +598,7 @@ const objectSplitOrder = [1, 0];
 (function data() {
   const lab = $('#datalab');
   const img = h('img', { alt:'Human demonstration with a data glove' });
-  const vid = auto(h('video', { muted:true, loop:true, playsinline:true, preload:'metadata' })); vid.muted = true;
+  const vid = auto(h('video', { muted:true, loop:true, playsinline:true, preload:'none' })); vid.muted = true;
   const rail = h('div', { class:'rail', role:'tablist', 'aria-label':'In-hand skills' });
   const hand = h('figure', {class:'data-human'}, img, h('figcaption', {text:'Human demonstration'}));
   const robot = h('figure', {class:'data-robot'}, vid, h('figcaption', {text:'Robot-hand reference'}));
