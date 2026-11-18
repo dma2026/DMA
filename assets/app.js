@@ -1224,14 +1224,21 @@ const objectSplitOrder = [1, 0];
   const observer = new IntersectionObserver(entries=>{
     for(const {target,isIntersecting} of entries) {
       clearTimeout(timers.get(target));
-      if(isIntersecting) timers.set(target,setTimeout(()=>warm(target.id),target.id==='top'?1400:160));
+      if(isIntersecting) {
+        const rect=target.getBoundingClientRect(), visible=rect.top<innerHeight && rect.bottom>0;
+        const delay=target.id==='top'?1400:visible?120:800;
+        timers.set(target,setTimeout(()=>warm(target.id),delay));
+      }
     }
-  }, {rootMargin:'-4% 0px'});
+  }, {rootMargin:'65% 0px'});
   for(const id of Object.keys(groups)) observer.observe(document.getElementById(id));
   for(const a of document.querySelectorAll('a[href^="#"]')) {
     const id=a.hash.slice(1);
     a.addEventListener('click',()=>{DMAMedia.navigate(id);warm(id);});
     a.addEventListener('focus',()=>warm(id));
+    let intent;
+    a.addEventListener('pointerenter',()=>{intent=setTimeout(()=>warm(id),90);});
+    a.addEventListener('pointerleave',()=>clearTimeout(intent));
   }
   if(location.hash) {
     const target=document.getElementById(location.hash.slice(1));
