@@ -203,7 +203,7 @@ function player({ tag } = {}) {
       el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
       if (video._vis && !reduced) DMAMedia.play(video).catch(() => {});
     },
-    seek(t) { video.currentTime = t; video._userPaused = false; DMAMedia.play(video).catch(() => {}); },
+    seek(t) { DMAMedia.seek(video, t); video._userPaused = false; DMAMedia.play(video).catch(() => {}); },
   };
 }
 
