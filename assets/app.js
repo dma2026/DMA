@@ -144,12 +144,44 @@ const fmtT = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2
 const ICON = { play: 'M8 5.5v13l11-6.5z', pause: 'M7 5h4v14H7zM13 5h4v14h-4z', full: 'M4 9V4h5v2H6v3zm11-5h5v5h-2V6h-3zM4 15h2v3h3v2H4zm14 0h2v5h-5v-2h3z' };
 const icon = d => h('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, h('path', { d }));
 
-// Videos marked data-auto play only while on screen; a manual pause is respected until the clip changes.
+// Pausing playback alone can leave a large HTTP range request in flight.
+function mediaVisibility(v, visible) {
+  clearTimeout(v._releaseTimer);
+  if (visible) {
+    if (v._suspended) {
+      const { src, time } = v._suspended;
+      v._suspended = null;
+      v.src = src;
+      if (time > 0) v.currentTime = time;
+    }
+    return;
+  }
+  v.pause();
+  v._releaseTimer = setTimeout(() => {
+    const src = v.getAttribute('src');
+    if (!src || v.networkState !== v.NETWORK_LOADING) return;
+    v._suspended = {src, time:v.currentTime};
+    v.removeAttribute('src');
+    v.load();
+  }, 300);
+}
+const posterIO = new IntersectionObserver(entries => entries.forEach(({target:v,isIntersecting}) => {
+  v._near = isIntersecting;
+  if (isIntersecting && v._poster) v.poster = v._poster;
+}), {rootMargin:'300px 0px'});
+function selectClip(v, src, poster) {
+  v._suspended = null;
+  v._poster = poster;
+  if (v._near || v._vis) v.poster = poster;
+  v.src = src;
+}
 const autoIO = new IntersectionObserver(es => es.forEach(e => {
-  const v = e.target; v._vis = e.isIntersecting;
-  if (v._vis && !v._userPaused && !reduced) v.play().catch(() => {}); else v.pause();
+  const v = e.target;
+  v._vis = e.isIntersecting;
+  mediaVisibility(v,v._vis);
+  if (v._vis && !v._userPaused && !reduced) v.play().catch(() => {});
 }), { threshold: .35 });
-const auto = v => { v.dataset.auto = ''; autoIO.observe(v); return v; };
+const auto = v => { v.dataset.auto = ''; posterIO.observe(v); autoIO.observe(v); return v; };
 document.addEventListener('visibilitychange', () => document.querySelectorAll('video').forEach(v => {
   if (document.hidden) v.pause(); else if (v._vis && !v._userPaused && !reduced) v.play().catch(() => {});
 }));
@@ -182,7 +214,7 @@ function player({ tag } = {}) {
     el, video, onTime: f => listeners.push(f),
     setTag: t => { if (tagEl) tagEl.textContent = t; },
     load(src, poster) {
-      video._userPaused = false; video.poster = poster; video.src = src;
+      video._userPaused = false; selectClip(video,src,poster);
       el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
       if (video._vis && !reduced) video.play().catch(() => {});
     },
@@ -224,7 +256,7 @@ function stageStrip(cls, pl) {
 /* ───────── hero: large demo reel ───────── */
 (function hero() {
   const hero = $('#top'), stage = $('#hero-stage'), vid = $('#hero-video'), name = $('#reel-name'), chipsHost = $('#reel-chips'), pause = $('#hero-pause');
-  let cur = -1, userPaused = reduced, visible = true;
+  let cur = -1, userPaused = reduced, visible = true, swapTimer;
   vid.muted = true;
   const chips = REEL.map(([, label, , short], i) => h('button', { type: 'button', role: 'tab', title: label, text: short, onclick: () => show(i) }));
   chipsHost.append(...chips);
@@ -244,20 +276,21 @@ function stageStrip(cls, pl) {
   }
   new ResizeObserver(frame).observe(hero); stacked.addEventListener('change', frame);
   function show(i) {
+    clearTimeout(swapTimer);
     cur = (i + REEL.length) % REEL.length; const [f, label] = REEL[cur];
     chips.forEach((c, j) => { c.setAttribute('aria-selected', j === cur); c.classList.toggle('done', j < cur); c.style.setProperty('--p', 0); });
     name.textContent = label;
     // The reel loads each clip under its own URL (?reel) so it is never queued behind a section player's request for the same file.
-    if (vid.getAttribute('src') === `media/real/${f}.mp4?reel`) { frame(); play(); return; }
+    if (vid.getAttribute('src') === `media/real/${f}.mp4?reel`) { stage.classList.remove('swap'); frame(); play(); return; }
     stage.classList.add('swap');
-    setTimeout(() => { vid.poster = `media/real/${f}.jpg`; vid.src = `media/real/${f}.mp4?reel`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
+    swapTimer = setTimeout(() => { vid._suspended = null; vid.poster = `media/real/${f}.jpg`; vid.src = `media/real/${f}.mp4?reel`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
     const next = REEL[(cur + 1) % REEL.length][0]; new Image().src = `media/real/${next}.jpg`;
   }
   vid.addEventListener('timeupdate', () => chips[cur]?.style.setProperty('--p', vid.currentTime / (vid.duration || 1)));
   vid.addEventListener('ended', () => show(cur + 1));
   const syncPause = () => { pause.querySelector('span').textContent = userPaused ? 'Play' : 'Pause'; pause.querySelector('path').setAttribute('d', userPaused ? ICON.play : ICON.pause); };
   pause.onclick = () => { userPaused = !userPaused; syncPause(); userPaused ? vid.pause() : play(); };
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? play() : vid.pause(); }, { threshold: .1 }).observe(hero);
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; mediaVisibility(vid,visible); if (visible) play(); }, { threshold: .1 }).observe(hero);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) play(); });
   syncPause(); show(0);
 })();
@@ -273,7 +306,7 @@ function stageStrip(cls, pl) {
   b.addEventListener('ended', () => { a.currentTime = 0; b.currentTime = 0; if (b._vis) { a.play().catch(() => {}); b.play().catch(() => {}); } });
   function load(i) {
     cur = WHY[i]; ta.textContent = cur.aTag; tb.textContent = cur.bTag; ta.classList.remove('show'); tb.classList.remove('show');
-    a.poster = cur.a + '.jpg'; a.src = cur.a + '.mp4'; b.poster = cur.b + '.jpg'; b.src = cur.b + '.mp4';
+    selectClip(a,cur.a + '.mp4',cur.a + '.jpg'); selectClip(b,cur.b + '.mp4',cur.b + '.jpg');
     if (a._vis && !reduced) { a.play().catch(() => {}); b.play().catch(() => {}); }
   }
   seg($('#why-tabs'), WHY.map(w => w.name), load, { label: 'Tool' });
@@ -572,7 +605,7 @@ $('#duo').append(...MULTI.map(m => {
 (function data() {
   const lab = $('#datalab');
   const img = h('img', { alt:'Human demonstration with a data glove' });
-  const vid = auto(h('video', { muted:true, loop:true, playsinline:true, preload:'metadata' })); vid.muted = true;
+  const vid = auto(h('video', { muted:true, loop:true, playsinline:true, preload:'none' })); vid.muted = true;
   const rail = h('div', { class:'rail', role:'tablist', 'aria-label':'In-hand skills' });
   const hand = h('figure', {class:'data-human'}, img, h('figcaption', {text:'Human demonstration'}));
   const robot = h('figure', {class:'data-robot'}, vid, h('figcaption', {text:'Robot-hand reference'}));
@@ -591,7 +624,7 @@ $('#duo').append(...MULTI.map(m => {
     img.src = 'media/data/human_'+f+'.svg';
     img.alt = name+' demonstrated with a data glove';
     vid.setAttribute('aria-label', name+' retargeted to the robot hand');
-    vid.poster = 'media/data/'+f+'.jpg'; vid.src = 'media/data/'+f+'.mp4';
+    selectClip(vid,'media/data/'+f+'.mp4','media/data/'+f+'.jpg');
     if (vid._vis && !vid._userPaused && !reduced) vid.play().catch(() => {});
     if (!reduced) for (const el of [img,vid]) {
       el.getAnimations().forEach(anim => anim.cancel());
