@@ -372,6 +372,7 @@ $('#duo').append(...MULTI.map(m => {
     v.ontimeupdate = () => { if (v === activeVideo()) seek.value = v.currentTime; };
   }
   track(overview);
+  let cached = -1;
   let previewFrame;
   function paintPreview() {
     previewFrame = 0;
@@ -389,7 +390,7 @@ $('#duo').append(...MULTI.map(m => {
     const v = activeVideo();
     v.currentTime = Number(seek.value);
   };
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; playback(); }, { threshold: .1 }).observe(stage);
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (!visible && cached >= 0) discard(cached); playback(); }, { threshold: .1 }).observe(stage);
   document.addEventListener('visibilitychange', playback);
 
   // Enlarge the playing grid cell until its standalone clip presents a decoded frame.
@@ -437,14 +438,29 @@ $('#duo').append(...MULTI.map(m => {
     el.getBoundingClientRect(); // Commit the cell geometry before the expansion.
     return layer;
   }
+  function discard(i) {
+    const layer = layers.get(i);
+    if (!layer) return;
+    if (cached === i) cached = -1;
+    layers.delete(i);
+    layer.el.remove();
+    layer.video.onerror = null;
+    layer.video.removeAttribute('src');
+    layer.video.load();
+  }
   function retire(i) {
     const layer = layers.get(i);
     if (!layer) return;
     layer.el.classList.remove('expanded');
     layer.cleanup = setTimeout(() => {
       if (shown === i) return;
-      layers.delete(i); layer.el.remove(); layer.video.onerror = null;
-      layer.video.removeAttribute('src'); layer.video.load();
+      const v = layer.video;
+      const full = v.buffered.length === 1 && v.buffered.start(0) <= .05 && v.buffered.end(0) >= v.duration - .05;
+      if (visible && full && !v.error && new URLSearchParams(location.search).get('cache') !== 'off') {
+        if (cached >= 0 && cached !== i) discard(cached);
+        cached = i;
+        layer.el.hidden = true;
+      } else discard(i);
     }, reduced ? 0 : 440);
   }
   function mark() {
@@ -469,6 +485,12 @@ $('#duo').append(...MULTI.map(m => {
       if (i >= 0) {
         const layer = layers.get(i) || makeLayer(i, phase);
         clearTimeout(layer.cleanup);
+        if (cached === i) {
+          cached = -1;
+          layer.el.hidden = false;
+          if (Math.abs(layer.video.currentTime - phase) > .12) layer.video.currentTime = phase;
+          layer.el.getBoundingClientRect();
+        }
         layer.el.classList.add('expanded');
       } else if (overview.readyState >= 1 && Math.abs(overview.currentTime - phase) > .12) {
         overview.currentTime = phase;
@@ -1204,11 +1226,13 @@ $('#duo').append(...MULTI.map(m => {
 
 // Prepare the destination's own MP4 element on deliberate navigation intent.
 (function warmDestination() {
-  if (new URLSearchParams(location.search).get('cache') !== 'intent') return;
+  const mode = new URLSearchParams(location.search).get('cache');
+  if (mode === 'off') return;
   let pending, warming;
   function prepare(link) {
     if (document.hidden || navigator.connection?.saveData || /^(slow-2g|2g)$/.test(navigator.connection?.effectiveType)) return;
-    const section = document.getElementById(link.hash.slice(1));
+    if (link.hash !== '#video' && mode !== 'intent') return;
+    const section = document.getElementById(link.hash === '#demos' ? 'level-1' : link.hash.slice(1));
     const v = section?.querySelector('video[src]');
     if (!v || !v.paused || v.readyState >= 2 || v.preload !== 'none' || (warming && warming.networkState === 2)) return;
     const busy = [...document.querySelectorAll('video')].some(other => {
