@@ -248,6 +248,7 @@ function stageStrip(cls, pl) {
     chips.forEach((c, j) => { c.setAttribute('aria-selected', j === cur); c.classList.toggle('done', j < cur); c.style.setProperty('--p', 0); });
     name.textContent = label;
     // The reel loads each clip under its own URL (?reel) so it is never queued behind a section player's request for the same file.
+    if (vid.getAttribute('src') === `media/real/${f}.mp4?reel`) { frame(); play(); return; }
     stage.classList.add('swap');
     setTimeout(() => { vid.poster = `media/real/${f}.jpg`; vid.src = `media/real/${f}.mp4?reel`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
     const next = REEL[(cur + 1) % REEL.length][0]; new Image().src = `media/real/${next}.jpg`;
@@ -336,7 +337,7 @@ $('#duo').append(...MULTI.map(m => {
   const files = SIM.map((_, i) => String(i + 1).padStart(2, '0'));
   const label = i => [files[i], SIM[i][1], SIM[i][3], SIM[i][2]].filter(Boolean).join(' · ');
   const overview = h('video', { muted: true, playsinline: true, loop: true, preload: 'none',
-    poster: base + 'overview.jpg', src: base + 'overview.mp4' });
+    poster: base + 'overview.jpg', src: base + 'overview.mp4?v=2' });
   overview.muted = true;
   const grid = h('div', { class: 'sim-cells' });
   const stage = h('div', { class: 'sim-stage' }, overview, grid);
@@ -353,54 +354,86 @@ $('#duo').append(...MULTI.map(m => {
   const groupNames = ['Training objects', 'Unseen tools'];
   const layers = new Map();
   let group = 0, shown = -1, pinned = -1, timer, visible = false, paused = reduced;
+  const activeVideo = () => {
+    const layer = layers.get(shown);
+    return layer && !layer.video.error ? layer.video : overview;
+  };
   function playback() {
-    const playing = visible && !paused && !document.hidden;
+    const active = activeVideo();
     for (const v of [overview, ...Array.from(layers.values(), layer => layer.video)]) {
-      if (playing && (v === overview || layers.get(shown)?.video === v)) v.play().catch(() => {});
+      if ((v === active || (v === overview && layers.get(shown)?.previewing)) && visible && !paused && !document.hidden) v.play().catch(() => {});
       else v.pause();
     }
+    cancelAnimationFrame(previewFrame);
+    paintPreview();
+    updatePlay();
   }
-  function align(v) {
-    if (!v || !Number.isFinite(v.duration) || v.seeking) return;
-    const t = overview.currentTime % v.duration;
-    if (Math.abs(t - v.currentTime) > .18) v.currentTime = t;
+  function track(v) {
+    v.ontimeupdate = () => { if (v === activeVideo()) seek.value = v.currentTime; };
   }
-  overview.ontimeupdate = () => {
-    seek.value = overview.currentTime;
-    align(layers.get(shown)?.video);
-  };
+  track(overview);
+  let previewFrame;
+  function paintPreview() {
+    previewFrame = 0;
+    const layer = layers.get(shown);
+    if (!layer?.previewing) return;
+    layer.paint();
+    if (visible && !paused && !document.hidden) previewFrame = requestAnimationFrame(paintPreview);
+  }
   function updatePlay() {
-    play.replaceChildren(icon(overview.paused ? ICON.play : ICON.pause));
-    play.setAttribute('aria-label', overview.paused ? 'Play' : 'Pause');
+    play.replaceChildren(icon(paused ? ICON.play : ICON.pause));
+    play.setAttribute('aria-label', paused ? 'Play' : 'Pause');
   }
-  overview.onplay = overview.onpause = updatePlay;
-  play.onclick = () => { paused = !overview.paused; playback(); };
-  seek.oninput = () => { if (overview.readyState) overview.currentTime = Number(seek.value); };
-  overview.onseeked = () => align(layers.get(shown)?.video);
+  play.onclick = () => { paused = !paused; playback(); };
+  seek.oninput = () => {
+    const v = activeVideo();
+    v.currentTime = Number(seek.value);
+  };
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; playback(); }, { threshold: .1 }).observe(stage);
   document.addEventListener('visibilitychange', playback);
 
-  // The low-resolution first frame comes from this cell at the current playback time.
-  // It travels with the standalone film while the decoder seeks to the same frame.
-  function makeLayer(i) {
+  // Enlarge the playing grid cell until its standalone clip presents a decoded frame.
+  function makeLayer(i, phase) {
     const col = i % 8, row = Math.floor(i / 8);
     const video = h('video', { muted: true, playsinline: true, loop: true, preload: 'auto', poster: base + files[i] + '.jpg' });
     video.muted = true;
     const snapshot = h('canvas', { width: 240, height: 135 });
-    if (overview.readyState >= 2) {
-      snapshot.getContext('2d').drawImage(overview, col * 240, row * 180 + 22, 240, 135, 0, 0, 240, 135);
-    } else snapshot.hidden = true;
+    const ctx = snapshot.getContext('2d');
+    let lastTime = -1;
+    snapshot.hidden = true;
+    function paint() {
+      if (!ctx || overview.readyState < 2 || overview.currentTime === lastTime) return;
+      lastTime = overview.currentTime;
+      const w = overview.videoWidth / 8, h = overview.videoHeight / 6, crop = w * 9 / 16;
+      ctx.drawImage(overview, col * w, row * h + (h - crop) / 2, w, crop, 0, 0, 240, 135);
+      snapshot.hidden = false;
+    }
     const el = h('div', { class: 'sim-detail', 'aria-hidden': 'true', css: {
       '--tx': (col * 12.5) + '%', '--ty': ((row + .125) * 100 / 6) + '%'
     } }, video, snapshot);
-    const layer = { el, video, cleanup: null };
-    video.onloadedmetadata = () => align(video);
-    video.onloadeddata = video.onseeked = () => {
-      if (!video.seeking && video.readyState >= 2) snapshot.classList.add('decoded');
+    const layer = { el, video, paint, previewing: true, cleanup: null };
+    track(video);
+    // Match the overview when that frame is already available. A cold clip starts
+    // sequentially, so the decoder can show a frame before another range request.
+    video.onloadedmetadata = () => {
+      if (paused || (video.buffered.length && video.buffered.start(0) <= phase && phase < video.buffered.end(0))) {
+        video.currentTime = phase;
+      }
     };
-    video.onerror = () => { if (shown === i) reset(); };
+    const reveal = () => {
+      layer.previewing = false;
+      snapshot.classList.add('decoded');
+      if (shown === i) playback();
+    };
+    if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(reveal);
+    else video.onloadeddata = reveal;
+    video.onerror = () => {
+      layer.previewing = true;
+      snapshot.classList.remove('decoded');
+      if (shown === i) playback();
+    };
     layers.set(i, layer); stage.append(el);
-    video.src = base + files[i] + '.mp4';
+    video.src = base + files[i] + '.mp4?v=2';
     el.getBoundingClientRect(); // Commit the cell geometry before the expansion.
     return layer;
   }
@@ -429,13 +462,16 @@ $('#duo').append(...MULTI.map(m => {
   }
   function show(i) {
     if (i !== shown) {
+      const previous = activeVideo();
+      const phase = previous.readyState >= 2 ? previous.currentTime : overview.currentTime;
       retire(shown); shown = i;
       name.textContent = i < 0 ? '48 references' : label(i);
       if (i >= 0) {
-        const layer = layers.get(i) || makeLayer(i);
+        const layer = layers.get(i) || makeLayer(i, phase);
         clearTimeout(layer.cleanup);
         layer.el.classList.add('expanded');
-        align(layer.video);
+      } else if (overview.readyState >= 1 && Math.abs(overview.currentTime - phase) > .12) {
+        overview.currentTime = phase;
       }
       stage.classList.toggle('zooming', i >= 0);
       playback();
