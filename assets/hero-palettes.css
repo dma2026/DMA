@@ -1,0 +1,10 @@
+html[data-hero="a"]{--hero-bg:#e7f1ed;--hero-ink:#143d38;--hero-soft:#416259;--hero-accent:#35796a;--hero-on-accent:#fff;--hero-glow:#fbfcf6}
+html[data-hero]:not([data-hero="original"]) .hero{background:radial-gradient(ellipse at 95% 40%,var(--hero-glow),transparent 67%),var(--hero-bg)}
+html[data-hero]:not([data-hero="original"]) .hero::before{background:
+  linear-gradient(90deg,transparent calc(var(--free,58vw) - 170px),var(--hero-bg) calc(var(--free,58vw) + 96px),transparent 100%),
+  linear-gradient(180deg,color-mix(in srgb,var(--hero-bg) 32%,transparent),transparent 17%,transparent calc(100% - 154px),var(--hero-bg) calc(100% - 102px))}
+html[data-hero]:not([data-hero="original"]) .hero-btn:not(.primary),
+html[data-hero]:not([data-hero="original"]) .hero-pause{border-color:color-mix(in srgb,var(--hero-ink) 23%,transparent);background:#ffffff56}
+html[data-hero]:not([data-hero="original"]) .reel-chips button::before{background:color-mix(in srgb,var(--hero-ink) 18%,transparent)}
+html[data-hero]:not([data-hero="original"]) body:not(.scrolled) .wordmark{color:var(--hero-ink);background:#ffffffe0}
+html[data-hero]:not([data-hero="original"]) .wordmark img{filter:none}
