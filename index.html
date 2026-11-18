@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-68ts1eyzR4sbYCXcySM3UIAoOblUb/VerwOuNxdx0cM=' 'sha256-M04X59xgPpsUda6SGuCp8I3HBhbx/QXfz5u4UIDgZkU=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-d1BHUFOVMNTko6wxYf3eakwAtsCVsStj5zO6UixQUeE=' 'sha256-AMaydD7E+Kg90hu2R5p1a7K1utSltC8mjJotmbmRBSc=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script>/* Native playback handles cold clips and seeking. When a section's opening frames
    are in memory, feed those same frames to the decoder before the network reply. */
 const DMAMedia = (() => {
@@ -41,6 +41,18 @@ const DMAMedia = (() => {
   function permits(id) {
     return !destination || performance.now()>permitUntil || id===destination ||
            (destination==='demos' && id==='level-1');
+  }
+  // Start the first shot's continuation while the HTML is still arriving.
+  // Its opening bytes are already in the page and must not be downloaded twice.
+  let continuation;
+  if ((!location.hash || location.hash==='#top') && !document.hidden &&
+      !matchMedia('(prefers-reduced-motion: reduce)').matches && !navigator.connection?.saveData &&
+      window.MediaSource?.isTypeSupported('video/mp4; codecs="'+clips[firstClip][5]+'"')) {
+    const offset=clips[firstClip][2], controller=new AbortController();
+    const promise=fetch(firstClip+version,{headers:{Range:`bytes=${offset}-${offset+1048575}`},signal:controller.signal,priority:'high'});
+    promise.catch(()=>{});
+    continuation={promise,controller};
+    setTimeout(()=>{if(continuation){continuation.controller.abort();continuation=null;}},30000);
   }
   function warm(group) {
     if (!window.MediaSource || navigator.connection?.saveData || !packs[group]) return;
@@ -175,7 +187,9 @@ const DMAMedia = (() => {
         while (!signal.aborted && offset < total) {
           const local = available();
           if (local) { await append(local); offset += local.length; continue; }
-          const begin=offset, request=new AbortController();
+          const early=path===firstClip && offset===info[2] && continuation;
+          if (early) continuation=null;
+          const begin=offset, request=early ? early.controller : new AbortController();
           const stop = () => request.abort();
           const packed = () => { if (offset===begin && available()) stop(); };
           signal.addEventListener('abort',stop,{once:true});
@@ -183,7 +197,7 @@ const DMAMedia = (() => {
           try {
             const budget = offset === 0 ? info[2] : 1024 * 1024;
             const end = Math.min(total, offset + budget);
-            const response = await fetch(path + version, {headers:{Range:`bytes=${offset}-${end-1}`}, signal:request.signal, priority:'high'});
+            const response = early ? await early.promise : await fetch(path + version, {headers:{Range:`bytes=${offset}-${end-1}`}, signal:request.signal, priority:'high'});
             if (response.status !== 200 && (response.status !== 206 || !response.headers.get('Content-Range')?.startsWith('bytes ' + offset + '-'))) throw Error('Range unavailable');
             let skip = response.status === 200 ? offset : 0;
             const reader = response.body.getReader();
@@ -2355,6 +2369,15 @@ const objectSplitOrder = [1, 0];
   const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
   const warm = id => {
     if (!DMAMedia.permits(id)) return;
+    const hero=document.querySelector('#hero-video');
+    if (!location.hash && scrollY<innerHeight*.25 && (id==='top' || id==='why') &&
+        !hero.paused && (!hero.buffered.length || hero.buffered.end(hero.buffered.length-1)-hero.currentTime<2.5)) {
+      if (!hero.dataset.warmPending) {
+        hero.dataset.warmPending='1';
+        setTimeout(()=>{delete hero.dataset.warmPending;if(scrollY<innerHeight*.25)warm('top');},1200);
+      }
+      return;
+    }
     for (const group of groups[id] || []) {
       DMAMedia.warm(group);
       if (group==='main') {
@@ -2363,6 +2386,13 @@ const objectSplitOrder = [1, 0];
       }
     }
   };
+  function leavingHero() {
+    if (scrollY<innerHeight*.25) return;
+    removeEventListener('scroll',leavingHero);
+    const why=document.getElementById('why').getBoundingClientRect();
+    if(why.bottom>0 && why.top<innerHeight*1.65) warm('why');
+  }
+  addEventListener('scroll',leavingHero,{passive:true});
   const timers=new Map();
   const observer = new IntersectionObserver(entries=>{
     for(const {target,isIntersecting} of entries) {

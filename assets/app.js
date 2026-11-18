@@ -1212,6 +1212,15 @@ const objectSplitOrder = [1, 0];
   const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
   const warm = id => {
     if (!DMAMedia.permits(id)) return;
+    const hero=document.querySelector('#hero-video');
+    if (!location.hash && scrollY<innerHeight*.25 && (id==='top' || id==='why') &&
+        !hero.paused && (!hero.buffered.length || hero.buffered.end(hero.buffered.length-1)-hero.currentTime<2.5)) {
+      if (!hero.dataset.warmPending) {
+        hero.dataset.warmPending='1';
+        setTimeout(()=>{delete hero.dataset.warmPending;if(scrollY<innerHeight*.25)warm('top');},1200);
+      }
+      return;
+    }
     for (const group of groups[id] || []) {
       DMAMedia.warm(group);
       if (group==='main') {
@@ -1220,6 +1229,13 @@ const objectSplitOrder = [1, 0];
       }
     }
   };
+  function leavingHero() {
+    if (scrollY<innerHeight*.25) return;
+    removeEventListener('scroll',leavingHero);
+    const why=document.getElementById('why').getBoundingClientRect();
+    if(why.bottom>0 && why.top<innerHeight*1.65) warm('why');
+  }
+  addEventListener('scroll',leavingHero,{passive:true});
   const timers=new Map();
   const observer = new IntersectionObserver(entries=>{
     for(const {target,isIntersecting} of entries) {
