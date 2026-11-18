@@ -26,6 +26,7 @@ function h(tag, attrs = {}, ...kids) {
     if (k.startsWith('aria-')) { el.setAttribute(k, String(v)); continue; }
     if (v == null || v === false) continue;
     if (k === 'poster' && tag === 'video') queuePoster(el,v);
+    else if (k === 'src' && tag === 'video') DMAMedia.set(el,v);
     else if (k === 'class') el.setAttribute('class', v);
     else if (k === 'text') el.textContent = v;
     else if (k === 'css') for (const [p, val] of Object.entries(v)) el.style.setProperty(p, val);
@@ -163,11 +164,11 @@ const icon = d => h('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' }, h('p
 // Videos marked data-auto play only while on screen; a manual pause is respected until the clip changes.
 const autoIO = new IntersectionObserver(es => es.forEach(e => {
   const v = e.target; v._vis = e.isIntersecting;
-  if (v._vis && !v._userPaused && !reduced) v.play().catch(() => {}); else v.pause();
+  if (v._vis && !v._userPaused && !reduced) DMAMedia.play(v).catch(() => {}); else v.pause();
 }), { threshold: .35 });
 const auto = v => { v.dataset.auto = ''; autoIO.observe(v); return v; };
 document.addEventListener('visibilitychange', () => document.querySelectorAll('video').forEach(v => {
-  if (document.hidden) v.pause(); else if (v._vis && !v._userPaused && !reduced) v.play().catch(() => {});
+  if (document.hidden) v.pause(); else if (v._vis && !v._userPaused && !reduced) DMAMedia.play(v).catch(() => {});
 }));
 
 function player({ tag } = {}) {
@@ -183,7 +184,7 @@ function player({ tag } = {}) {
     const p = video.paused; el.classList.toggle('paused', p);
     btn.replaceChildren(icon(p ? ICON.play : ICON.pause)); btn.setAttribute('aria-label', p ? 'Play' : 'Pause');
   };
-  const toggle = () => { if (video.paused) { video._userPaused = false; video.play().catch(() => {}); } else { video._userPaused = true; video.pause(); } };
+  const toggle = () => { if (video.paused) { video._userPaused = false; DMAMedia.play(video).catch(() => {}); } else { video._userPaused = true; video.pause(); } };
   btn.onclick = toggle; video.onclick = toggle;
   video.addEventListener('play', sync); video.addEventListener('pause', sync);
   const listeners = [];
@@ -198,11 +199,11 @@ function player({ tag } = {}) {
     el, video, onTime: f => listeners.push(f),
     setTag: t => { if (tagEl) tagEl.textContent = t; },
     load(src, poster) {
-      video._userPaused = false; queuePoster(video, poster); video.src = src;
+      video._userPaused = false; queuePoster(video, poster); DMAMedia.set(video, src);
       el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
-      if (video._vis && !reduced) video.play().catch(() => {});
+      if (video._vis && !reduced) DMAMedia.play(video).catch(() => {});
     },
-    seek(t) { video.currentTime = t; video._userPaused = false; video.play().catch(() => {}); },
+    seek(t) { video.currentTime = t; video._userPaused = false; DMAMedia.play(video).catch(() => {}); },
   };
 }
 
@@ -240,11 +241,11 @@ function stageStrip(cls, pl) {
 /* ───────── hero: large demo reel ───────── */
 (function hero() {
   const hero = $('#top'), stage = $('#hero-stage'), vid = $('#hero-video'), name = $('#reel-name'), chipsHost = $('#reel-chips'), pause = $('#hero-pause');
-  let cur = -1, userPaused = reduced, visible = true;
+  let cur = -1, userPaused = reduced, visible = !location.hash || location.hash === '#top';
   vid.muted = true;
   const chips = REEL.map(([, label, , short], i) => h('button', { type: 'button', role: 'tab', title: label, text: short, onclick: () => show(i) }));
   chipsHost.append(...chips);
-  const play = () => { if (visible && !userPaused) vid.play().catch(() => {}); };
+  const play = () => { if (visible && !userPaused) DMAMedia.play(vid).catch(() => {}); };
   // Frame the clip so the hand and tool sit at the centre of the free area left of the title, not the page centre.
   const copy = $('.hero-copy'), stacked = matchMedia('(max-width:900px),(max-aspect-ratio:1/1)');
   function frame() {
@@ -263,9 +264,10 @@ function stageStrip(cls, pl) {
     cur = (i + REEL.length) % REEL.length; const [f, label] = REEL[cur];
     chips.forEach((c, j) => { c.setAttribute('aria-selected', j === cur); c.classList.toggle('done', j < cur); c.style.setProperty('--p', 0); });
     name.textContent = label;
-    if (vid.getAttribute('src') === `media/reel/${f}.mp4`) { frame(); play(); return; }
-    stage.classList.add('swap');
-    setTimeout(() => { vid.poster = `media/reel/${f}.webp`; vid.src = `media/reel/${f}.mp4`; frame(); play(); stage.classList.remove('swap'); }, reduced ? 0 : 260);
+    if (vid.dataset.clipPath === `media/reel/${f}.mp4`) { frame(); play(); return; }
+    vid.poster = `media/reel/${f}.webp`;
+    DMAMedia.set(vid, `media/reel/${f}.mp4`);
+    frame(); play();
 
   }
   vid.addEventListener('timeupdate', () => chips[cur]?.style.setProperty('--p', vid.currentTime / (vid.duration || 1)));
@@ -285,11 +287,11 @@ function stageStrip(cls, pl) {
   // The failed attempt holds on its last frame until the DMA clip finishes, then both restart together.
   a.addEventListener('timeupdate', () => ta.classList.toggle('show', a.currentTime >= cur.aAt));
   b.addEventListener('timeupdate', () => tb.classList.toggle('show', b.currentTime >= cur.bAt));
-  b.addEventListener('ended', () => { a.currentTime = 0; b.currentTime = 0; if (b._vis) { a.play().catch(() => {}); b.play().catch(() => {}); } });
+  b.addEventListener('ended', () => { a.currentTime = 0; b.currentTime = 0; if (b._vis) { DMAMedia.play(a).catch(() => {}); DMAMedia.play(b).catch(() => {}); } });
   function load(i) {
     cur = WHY[i]; ta.textContent = cur.aTag; tb.textContent = cur.bTag; ta.classList.remove('show'); tb.classList.remove('show');
-    queuePoster(a,cur.a+'.jpg'); a.src = cur.a + '.mp4'; queuePoster(b,cur.b+'.jpg'); b.src = cur.b + '.mp4?v=900p1';
-    if (a._vis && !reduced) { a.play().catch(() => {}); b.play().catch(() => {}); }
+    queuePoster(a,cur.a+'.jpg'); DMAMedia.set(a, cur.a + '.mp4'); queuePoster(b,cur.b+'.jpg'); DMAMedia.set(b, cur.b + '.mp4?v=900p1');
+    if (a._vis && !reduced) { DMAMedia.play(a).catch(() => {}); DMAMedia.play(b).catch(() => {}); }
   }
   seg($('#why-tabs'), WHY.map(w => w.name), load, { label: 'Tool' });
   load(0);
@@ -379,7 +381,7 @@ const objectSplitOrder = [1, 0];
   function playback() {
     const active = activeVideo();
     for (const v of [overview, ...Array.from(layers.values(), layer => layer.video)]) {
-      if ((v === active || (v === overview && layers.get(shown)?.previewing)) && visible && !paused && !document.hidden) v.play().catch(() => {});
+      if ((v === active || (v === overview && layers.get(shown)?.previewing)) && visible && !paused && !document.hidden) DMAMedia.play(v).catch(() => {});
       else v.pause();
     }
     cancelAnimationFrame(previewFrame);
@@ -452,7 +454,7 @@ const objectSplitOrder = [1, 0];
       if (shown === i) playback();
     };
     layers.set(i, layer); stage.append(el);
-    video.src = media(files[i] + '.mp4');
+    DMAMedia.set(video, media(files[i] + '.mp4'));
     el.getBoundingClientRect(); // Commit the cell geometry before the expansion.
     return layer;
   }
@@ -465,6 +467,7 @@ const objectSplitOrder = [1, 0];
     posterObserver.unobserve(layer.video);
     layer.el.remove();
     layer.video.onerror = null;
+    DMAMedia.dispose(layer.video);
     layer.video.removeAttribute('src');
     layer.video.load();
   }
@@ -634,8 +637,8 @@ const objectSplitOrder = [1, 0];
     img.src = 'media/data/human_'+f+'.svg';
     img.alt = name+' demonstrated with a data glove';
     vid.setAttribute('aria-label', name+' retargeted to the robot hand');
-    queuePoster(vid,'media/data/'+f+'.jpg'); vid.src = 'media/data/'+f+'.mp4';
-    if (vid._vis && !vid._userPaused && !reduced) vid.play().catch(() => {});
+    queuePoster(vid,'media/data/'+f+'.jpg'); DMAMedia.set(vid, 'media/data/'+f+'.mp4');
+    if (vid._vis && !vid._userPaused && !reduced) DMAMedia.play(vid).catch(() => {});
     if (!reduced) for (const el of [img,vid]) {
       el.getAnimations().forEach(anim => anim.cancel());
       el.animate([{opacity:.45,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:270,easing:'ease-out'});
@@ -880,9 +883,9 @@ const objectSplitOrder = [1, 0];
   let playRequest=0;
   function updateFilm() {
     if(!filmVisible || paused || document.hidden) { playRequest++;teleClip.pause();return; }
-    if(!teleClip.hasAttribute('src')) teleClip.src='media/method/teleop-bulb-masked.mp4';
+    if(!teleClip.hasAttribute('src')) DMAMedia.set(teleClip, 'media/method/teleop-bulb-masked.mp4');
     const request=++playRequest;
-    teleClip.play().catch(()=>{ if(request===playRequest) teleClip.pause(); });
+    DMAMedia.play(teleClip).catch(()=>{ if(request===playRequest) teleClip.pause(); });
   }
   function playback() {
     host.classList.toggle('md-paused',paused);
@@ -1201,33 +1204,32 @@ const objectSplitOrder = [1, 0];
   if (copy) copy.onclick = async () => { try { await navigator.clipboard.writeText($('#bibtex').textContent); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select and copy'; } setTimeout(() => copy.textContent = 'Copy', 1600); };
 })();
 
-// Prepare the destination's own MP4 element on deliberate navigation intent.
-(function warmDestination() {
-  const mode = new URLSearchParams(location.search).get('cache');
-  if (mode === 'off') return;
-  let pending, warming;
-  function prepare(link) {
-    if (document.hidden || navigator.connection?.saveData || /^(slow-2g|2g)$/.test(navigator.connection?.effectiveType)) return;
-    if (link.hash !== '#video' && mode !== 'intent') return;
-    const section = document.getElementById(link.hash === '#demos' ? 'level-1' : link.hash.slice(1));
-    const v = section?.querySelector('video[src]');
-    if (!v || !v.paused || v.readyState >= 2 || v.preload !== 'none' || (warming && warming.networkState === 2)) return;
-    const busy = [...document.querySelectorAll('video')].some(other => {
-      if (other.paused || other.ended || other === v) return false;
-      for (let i = 0; i < other.buffered.length; i++) {
-        if (other.buffered.start(i) <= other.currentTime && other.buffered.end(i) >= Math.min(other.currentTime+4, other.duration)) return false;
-      }
-      return true;
-    });
-    if (busy) return;
-    warming = v;
-    v.preload = 'metadata';
+
+// Warm the openings of selectable clips as the reader approaches their section.
+(() => {
+  const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
+  const warm = id => (groups[id] || []).forEach(group=>{
+    DMAMedia.warm(group);
+    if (group==='main') {
+      const film=document.querySelector('#video video');
+      film.preload='auto';
+      DMAMedia.start(film);
+    }
+  });
+  const observer = new IntersectionObserver(entries => {
+    for (const {target,isIntersecting} of entries) if (isIntersecting) {
+      warm(target.id); observer.unobserve(target);
+    }
+  }, {rootMargin:'650px 0px'});
+  function observe() { for (const id of Object.keys(groups)) observer.observe(document.getElementById(id)); }
+  if (location.hash || reduced) observe();
+  else {
+    const hero = document.getElementById('hero-video');
+    if (hero.currentTime > 0) observe();
+    else {hero.addEventListener('playing',observe,{once:true}); setTimeout(observe,3500);}
   }
-  for (const link of document.querySelectorAll('a[href^="#"]')) {
-    const schedule = () => { clearTimeout(pending); pending = setTimeout(() => prepare(link), 100); };
-    link.addEventListener('pointerenter', schedule);
-    link.addEventListener('focus', schedule);
-    link.addEventListener('pointerleave', () => clearTimeout(pending));
-    link.addEventListener('blur', () => clearTimeout(pending));
+  for (const a of document.querySelectorAll('a[href^="#"]')) {
+    for (const event of ['pointerenter','focus','pointerdown']) a.addEventListener(event,()=>warm(a.hash.slice(1)),{once:true});
   }
+
 })();
