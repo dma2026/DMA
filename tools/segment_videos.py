@@ -101,6 +101,14 @@ def build(source, ffmpeg):
         frames = round(starts[key][1]*30)
         result.append(opening(source, ffmpeg, frames, data[:init_size], shift, dest))
         result.append(base64.b64encode(data[:init_size]).decode())
+    else:
+        result.extend([None, None])
+    first, second = result[3][:2] if result[3] else ("0", "1")
+    head = (dest/(first+".m4s")).read_bytes()
+    joined = head + (dest/(second+".m4s")).read_bytes()
+    mirror = "start-"+hashlib.sha256(joined).hexdigest()[:12]
+    (dest/(mirror+".m4s")).write_bytes(joined)
+    result.append([mirror, len(head)])
     return result
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 const DMASegments = (() => {
   const tracks = /* manifest */ {};
   function attach(video, path, codec, duration, signal, fallback, jump, initialTime) {
-    const [folder, starts, keys, opening, initData] = tracks[path];
+    const [folder, starts, keys, opening, initData, overlap] = tracks[path];
     const media = new MediaSource();
     const url = URL.createObjectURL(media);
     let source, index = 0, next = 0, target = initialTime || 0, fetching = new Map();
@@ -13,6 +13,22 @@ const DMASegments = (() => {
       for (const i of keys) if (starts[i] <= target) index = i;
       next = index;
     }
+    // On a cold visit either of the first two necessary GETs can be the slow one.
+    // Both carry the opening bytes. Append each byte once and keep the same decoder.
+    const raceOpening = !initialTime && overlap && !navigator.connection?.saveData;
+    let headBytes=0, headQueue=Promise.resolve(), resolveHead;
+    const headReady=new Promise(resolve=>{resolveHead=resolve;});
+    async function offerHead(start, bytes) {
+      const write=headQueue.then(async()=>{
+        const skip=Math.max(0,headBytes-start);
+        if (skip>=bytes.length) return;
+        await append(bytes.subarray(skip));
+        headBytes=start+bytes.length;
+        if (raceOpening && headBytes>=overlap[1]) resolveHead(null);
+      });
+      headQueue=write.catch(()=>{});
+      await write;
+    }
     const base = 'assets/segments/' + folder + '/';
     const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
     function buffered(t) {
@@ -20,8 +36,8 @@ const DMASegments = (() => {
         if (t >= video.buffered.start(i)-.09 && t < video.buffered.end(i)) return video.buffered.end(i);
       return 0;
     }
-    async function download(file, streamFirst=false) {
-      let committed=0;
+    async function download(file, streamFirst=false, combined=false) {
+
       for (let attempt=0; ; attempt++) {
         signal.throwIfAborted();
         const request = new AbortController();
@@ -32,20 +48,20 @@ const DMASegments = (() => {
           const response = await fetch(base + file + '.m4s', {signal:request.signal,
             priority:file==='init' || streamFirst ? 'high' : 'auto'});
           if (!response.ok) throw Error('Video segment ' + response.status);
-          if (!streamFirst) return await response.arrayBuffer();
+          if (!streamFirst && !combined) return await response.arrayBuffer();
           const reader = response.body.getReader();
           let received=0;
+          const remainder=[];
           while (true) {
             const {done,value} = await reader.read();
             if (done) break;
-            const skip = Math.max(0, committed-received);
+            const n = combined ? Math.min(value.length,Math.max(0,overlap[1]-received)) : value.length;
+            if (n) await offerHead(received,value.subarray(0,n));
+            if (n<value.length) remainder.push(value.slice(n));
             received+=value.length;
-            if (skip<value.length) {
-              await append(value.subarray(skip));
-              committed=received;
-            }
           }
-          return null;
+          if (combined && received<=overlap[1]) throw Error('Incomplete combined segment');
+          return combined ? new Blob(remainder).arrayBuffer() : null;
         } catch (error) {
           if (signal.aborted || attempt>=2) throw error;
         } finally {
@@ -89,7 +105,9 @@ const DMASegments = (() => {
             continue;
           }
           while (next<files.length && next<index+3) {
-            const promise=download(files[next],next===0);
+            const combined=raceOpening && next===1;
+            const transfer=download(combined ? overlap[0] : files[next],next===0,combined);
+            const promise=raceOpening && next===0 ? Promise.race([transfer,headReady]) : transfer;
             promise.catch(()=>{});
             fetching.set(next++,promise);
           }
