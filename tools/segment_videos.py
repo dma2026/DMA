@@ -1,5 +1,6 @@
 """Split the released H.264 tracks into static, independently downloadable files."""
 import argparse
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -31,6 +32,39 @@ def fragment_info(moof):
     sync = bool(flags & 4) and not (struct.unpack_from(">I", trun, offset)[0] & 0x10000)
     return time, sync
 
+def opening(source, ffmpeg, frame_count, original_init, shift, dest):
+    """Encode the first GOP for a quick start, then return to the released track at its IDR."""
+    rate = "1350k" if source.parent.name=="main" else "600k"
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "opening.mp4"
+        subprocess.run([ffmpeg, "-nostdin", "-v", "error", "-i", str(source),
+                        "-map", "0:v:0", "-frames:v", str(frame_count),
+                        "-c:v", "libx264", "-threads", "4", "-preset", "slow",
+                        "-crf", "22", "-maxrate", rate, "-bufsize", rate,
+                        "-x264-params", "bframes=0:vbv-init=0.09:keyint=60",
+                        "-video_track_timescale", str(SCALE), "-movflags",
+                        "+empty_moov+default_base_moof+frag_keyframe+skip_trailer",
+                        "-frag_duration", "100000", str(out)], check=True)
+        out_data = bytearray(out.read_bytes())
+    cuts = [0]
+    for kind, pos, moof in boxes(out_data):
+        if kind!=b"moof": continue
+        # The original B-frame stream starts presenting after its decode timestamp.
+        t, _ = fragment_info(moof)
+        if (len(cuts)==1 and t>=1.2) or (len(cuts)==2 and t>=4): cuts.append(pos)
+        marker = moof.index(b"tfdt")+4
+        assert moof[marker]==1
+        offset = pos+8+marker+4
+        struct.pack_into(">Q", out_data, offset, struct.unpack_from(">Q",out_data,offset)[0]+shift)
+    out_data.extend(original_init)
+    name = "opening-"+hashlib.sha256(out_data).hexdigest()[:12]
+    files = []
+    for i,start in enumerate(cuts):
+        label = f"{name}-{i}"
+        (dest/(label+".m4s")).write_bytes(out_data[start:cuts[i+1] if i+1<len(cuts) else None])
+        files.append(label)
+    return files
+
 def build(source, ffmpeg):
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "track.mp4"
@@ -55,7 +89,19 @@ def build(source, ffmpeg):
         end = starts[i+1][0] if i+1<len(starts) else len(data)
         (dest / f"{i}.m4s").write_bytes(data[pos:end])
     (dest / "init.m4s").write_bytes(data[:init_size])
-    return [name, [round(t,3) for _, t, _ in starts], [i for i, (_,_,key) in enumerate(starts) if key]]
+    result = [name, [round(t,3) for _, t, _ in starts], [i for i, (_,_,key) in enumerate(starts) if key]]
+
+    if source.parent.name in ("main", "multi"):
+        first_trun = data.index(b"trun")+4
+        flags = int.from_bytes(data[first_trun+1:first_trun+4], "big")
+        assert flags & 0x800
+        cts = first_trun + 8 + 4*sum(bool(flags & mask) for mask in (1,4,0x100,0x200,0x400))
+        shift = struct.unpack_from(">I",data,cts)[0]
+        key = result[2][1]
+        frames = round(starts[key][1]*30)
+        result.append(opening(source, ffmpeg, frames, data[:init_size], shift, dest))
+        result.append(base64.b64encode(data[:init_size]).decode())
+    return result
 
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)

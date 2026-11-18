@@ -382,7 +382,7 @@ const objectSplitOrder = [1, 0];
   function playback() {
     const active = activeVideo();
     for (const v of [overview, ...Array.from(layers.values(), layer => layer.video)]) {
-      if ((v === active || (v === overview && layers.get(shown)?.previewing)) && visible && !paused && !document.hidden) DMAMedia.play(v).catch(() => {});
+      if ((v === active || (v === overview && overview.readyState >= 2 && layers.get(shown)?.previewing)) && visible && !paused && !document.hidden) DMAMedia.play(v).catch(() => {});
       else v.pause();
     }
     cancelAnimationFrame(previewFrame);
@@ -1211,7 +1211,7 @@ const objectSplitOrder = [1, 0];
 (() => {
   // Arm native controls without fetching any film bytes before Play.
   const film=document.querySelector('#video video');
-  if (!film.paused) DMAMedia.play(film).catch(()=>{}); else DMAMedia.start(film);
+  if (!film.paused) DMAMedia.play(film).catch(()=>{}); else DMAMedia.start(film,null,true);
   film.addEventListener('play',()=>DMAMedia.start(film));
   const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
   const warm = id => {
