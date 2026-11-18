@@ -332,12 +332,12 @@ $('#duo').append(...MULTI.map(m => {
 
 /* Simulation references in the same row-major order as the overview film. */
 (function simulation() {
-  const base = 'media/sim/references/';
+  const media = file => 'media/sim/references/' + file + '?v=soft1';
   const root = $('#sim-root');
   const files = SIM.map((_, i) => String(i + 1).padStart(2, '0'));
   const label = i => [files[i], SIM[i][1], SIM[i][3], SIM[i][2]].filter(Boolean).join(' · ');
   const overview = h('video', { muted: true, playsinline: true, loop: true, preload: 'none',
-    poster: base + 'overview.jpg', src: base + 'overview.mp4?v=2' });
+    poster: media('overview.jpg'), src: media('overview.mp4') });
   overview.muted = true;
   const grid = h('div', { class: 'sim-cells' });
   const stage = h('div', { class: 'sim-stage' }, overview, grid);
@@ -395,7 +395,7 @@ $('#duo').append(...MULTI.map(m => {
   // Enlarge the playing grid cell until its standalone clip presents a decoded frame.
   function makeLayer(i, phase) {
     const col = i % 8, row = Math.floor(i / 8);
-    const video = h('video', { muted: true, playsinline: true, loop: true, preload: 'auto', poster: base + files[i] + '.jpg' });
+    const video = h('video', { muted: true, playsinline: true, loop: true, preload: 'auto', poster: media(files[i] + '.jpg') });
     video.muted = true;
     const snapshot = h('canvas', { width: 240, height: 135 });
     const ctx = snapshot.getContext('2d');
@@ -433,7 +433,7 @@ $('#duo').append(...MULTI.map(m => {
       if (shown === i) playback();
     };
     layers.set(i, layer); stage.append(el);
-    video.src = base + files[i] + '.mp4?v=2';
+    video.src = media(files[i] + '.mp4');
     el.getBoundingClientRect(); // Commit the cell geometry before the expansion.
     return layer;
   }
@@ -510,7 +510,7 @@ $('#duo').append(...MULTI.map(m => {
       const i = sizes.values().next().value;
       const row = h('button', { type:'button', 'data-object':object, 'aria-pressed':false,
         onclick:() => toggle(pinned >= 0 && objectName(pinned) === object ? pinned : i) },
-        h('img', { src:base + files[i] + '.thumb.jpg', loading:'lazy', alt:'' }), h('b', { text:object }));
+        h('img', { src:media(files[i] + '.thumb.jpg'), loading:'lazy', alt:'' }), h('b', { text:object }));
       bind(row, i);
       const family = h('div', { class:'sim-family' }, row);
       if (sizes.size > 1) {
@@ -996,6 +996,8 @@ $('#duo').append(...MULTI.map(m => {
   const settings = studies.map(() => ({ metric: 0, split: 0 }));
   let study = 0, hour = ABL.size.pts.length - 1;
   let trendObserver;
+  const layout = new URLSearchParams(location.search).get('results');
+  const compare = ['a','b','c'].includes(layout);
   const dashboard = h('div', { class: 'rx-content' });
 
   function buttons(labels, current, label, cls, choose) {
@@ -1035,12 +1037,17 @@ $('#duo').append(...MULTI.map(m => {
     const metricName = study === 2 ? 'Success rate' : options[metric];
     const title = ['Comparison with baselines', 'Zero-shot tool use', 'Ablation study'][study];
     const labels = real ? ['Motion tracking', 'Teleoperation'] : ['Seen objects', 'Unseen objects'];
-    const sims = r => isError ? [r[4 + metric * 2 + split], errorSD[r[0]][(metric - 1) * 2 + split]] : [r[2 + split * 2], r[3 + split * 2]];
+    const sims = (r, s = split) => isError ? [r[4 + metric * 2 + s], errorSD[r[0]][(metric - 1) * 2 + s]] : [r[2 + s * 2], r[3 + s * 2]];
     const reference = sim ? simRows[0] : real ? REAL.at(-1) : scale ? ab.pts[hour] : ab.rows.at(-1);
     const intro = sim
       ? 'A single DMA policy tracks held-out motions on 34 training objects and nine unseen tools. It achieves the highest success rate and the lowest position error on both sets.'
       : real ? 'One policy performs six tasks with unseen tools. The robot completes every stage in 71.1% of trials when following recorded motions and 80.0% under live teleoperation.'
-      : ablationIntro(ab, split);
+      : compare ? [
+        'How does the choice of object representation affect tracking on seen and unseen objects?',
+        'Tracking success with three ways to sample starting states.',
+        'Tracking success under three conditions for applying the object reward.',
+        'Tracking success as training data increases from 1 to 40.1 hours on the same 34 objects.'
+      ][metric] : ablationIntro(ab, split);
     const header = h('div', { class: 'rx-head' }, h('h3', { text: title }), h('p', { text: intro }));
     const optionsBar = buttons(options, metric, study === 2 ? 'Ablation' : 'Metric', 'rx-options', i => {
       settings[study].metric = i; draw('.rx-options button[aria-pressed=true]');
@@ -1049,11 +1056,19 @@ $('#duo').append(...MULTI.map(m => {
       h('button', { type: 'button', class: 'rx-card', 'aria-pressed': i === split, 'aria-controls': 'rx-chart', onclick: () => {
         settings[study].split = i; draw('.rx-card[aria-pressed=true]');
       } }, label, real ? h('b', { title: 'Mean ' + metricName.toLowerCase(), text: reference[2+i*2+metric].toFixed(1)+'%' }) : sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(), text: reference[isError ? 4+metric*2+i : 2+i*2].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null)));
-    const toolbar = h('div', { class: 'rx-toolbar' }, cards, optionsBar);
+    const paired = compare && !real;
+    const key = scale && paired ? h('div', { class: 'rx-compare-legend' }, labels.map((name,i) => h('span', { class: i ? 'unseen' : 'seen', text: name }))) : null;
+    const toolbar = h('div', { class: 'rx-toolbar' }, paired ? key : cards, optionsBar);
     const chart = h('div', { id: 'rx-chart', class: 'rx-chart', 'data-tone': split, role: 'group',
-      'aria-label': labels[split] + ' · ' + metricName });
+      'aria-label': (paired ? labels.join(' and ') : labels[split]) + ' · ' + metricName });
     if (scale) {
       chart.append(trend(ab.pts, split));
+    } else if (paired) {
+      const rows = (sim ? simRows : [...ab.rows].reverse()).map(r => ({
+        name: r[0], desc: r[1], own: r === reference,
+        pairs: sim ? [sims(r,0), sims(r,1)] : [r.slice(2,4), r.slice(4,6)]
+      }));
+      chart.append(pairedBars(rows, layout, isError ? 25 : 100, decimals, unit));
     } else {
       const rows = sim ? simRows.map(r => ({ name: r[0], desc: r[1], own: r === reference, pair: sims(r) }))
         : real ? REAL.map(r => ({ name: r[0], own: r === reference, pair: [r[2+split*2+metric]],
@@ -1067,6 +1082,37 @@ $('#duo').append(...MULTI.map(m => {
     chart.append(h('p', { class: 'rx-standard', text: standard }));
     dashboard.replaceChildren(header, toolbar, chart);
     if (focus) dashboard.querySelector(focus)?.focus({ preventScroll: true });
+  }
+
+  function pairedBars(rows, layout, max, decimals, unit) {
+    const labels = ['Seen objects', 'Unseen objects'];
+    const pct = value => (100 * value / max) + '%';
+    const label = (pair, s) => h('span', { class: 'pc-value tone' + s,
+      'aria-label': labels[s] + ': ' + pair[0].toFixed(decimals) + ' ' + unit + (pair[1] == null ? '' : ', SD ' + pair[1].toFixed(decimals)) },
+      h('b', { text: pair[0].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }),
+      pair[1] == null ? null : h('small', { text: ' ± ' + pair[1].toFixed(decimals) }));
+    const lane = (pair, s) => h('span', { class: 'pc-lane tone' + s, 'aria-hidden': true },
+      h('i', { css: { width: pct(pair[0]) } }));
+    const legend = labels.map((name, s) => h('span', { class: 'pc-key tone' + s, text: name }));
+    const axis = h('div', { class: 'pc-axis' }, [0, max/2, max].map(v => h('span', { text: v + (unit === 'mm' ? ' mm' : unit) })));
+    const head = h('div', { class: 'pc-head' }, h('span', { text: 'Method' }),
+      ...(layout === 'b' ? legend : layout === 'c' ? [axis, ...legend] : [axis, h('span', { class: 'pc-keys' }, legend)]));
+    return h('div', { class: 'pc pc-' + layout }, head, rows.map(({ name, desc, own, pairs }) => {
+      const title = h('b', { class: 'pc-method', title: desc, text: name });
+      let content;
+      if (layout === 'b') {
+        content = pairs.map((pair, s) => h('div', { class: 'pc-column' }, label(pair,s), lane(pair,s)));
+      } else if (layout === 'c') {
+        const values = pairs.map(pair => pair[0]);
+        const plot = h('div', { class: 'pc-range', 'aria-hidden': true },
+          h('i', { css: { left: pct(Math.min(...values)), width: pct(Math.abs(values[0]-values[1])) } }),
+          values.map((v,s) => h('span', { class: 'pc-dot tone' + s, css: { left: pct(v) } })));
+        content = [plot, ...pairs.map(label)];
+      } else {
+        content = [h('div', { class: 'pc-stack' }, pairs.map(lane)), h('div', { class: 'pc-stack' }, pairs.map(label))];
+      }
+      return h('div', { class: 'pc-row' + (own ? ' own' : '') }, title, ...content);
+    }));
   }
 
   function bars(rows, max, decimals, unit) {
@@ -1105,7 +1151,7 @@ $('#duo').append(...MULTI.map(m => {
       svg.append(h('line', { class: 'rx-guide', x1: x(p[0]), x2: x(p[0]), y1: y(100), y2: y(0) }));
       [1-split,split].forEach(s => {
         const col = 1+2*s, coord = (r,k) => x(r[0])+','+y(r[col]+k*r[col+1]);
-        const group = h('g', { class: 'rx-series s'+s, opacity: s === split ? 1 : .68 });
+        const group = h('g', { class: 'rx-series s'+s, opacity: compare || s === split ? 1 : .68 });
         group.append(h('polygon', { points: [...pts.map(r => coord(r,1)), ...[...pts].reverse().map(r => coord(r,-1))].join(' ') }),
           h('polyline', { points: pts.map(r => coord(r,0)).join(' ') }),
           ...pts.map((r,i) => h('circle', { cx: x(r[0]), cy: y(r[col]), r: i === hour ? 5 : 3.4 })));
@@ -1147,11 +1193,40 @@ $('#duo').append(...MULTI.map(m => {
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
   document.querySelectorAll('.reveal').forEach(n => io.observe(n));
   const links = [...document.querySelectorAll('.site-header nav a')], ids = links.map(a => a.getAttribute('href').slice(1));
-  const group = id => (id.startsWith('level-') ? 'demos' : id === 'video' ? 'citation' : id);
+  const group = id => (id.startsWith('level-') ? 'demos' : id);
   const nav = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { const g = group(e.target.id); links.forEach((a, i) => a.classList.toggle('on', ids[i] === g)); } }), { rootMargin: '-45% 0px -50% 0px' });
   document.querySelectorAll('main section[id]').forEach(s => nav.observe(s));
   const onScroll = () => document.body.classList.toggle('scrolled', scrollY > innerHeight * .6);
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
   const copy = $('#copy-bib');
-  copy.onclick = async () => { try { await navigator.clipboard.writeText($('#bibtex').textContent); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select and copy'; } setTimeout(() => copy.textContent = 'Copy', 1600); };
+  if (copy) copy.onclick = async () => { try { await navigator.clipboard.writeText($('#bibtex').textContent); copy.textContent = 'Copied'; } catch { copy.textContent = 'Select and copy'; } setTimeout(() => copy.textContent = 'Copy', 1600); };
+})();
+
+// Prepare the destination's own MP4 element on deliberate navigation intent.
+(function warmDestination() {
+  if (new URLSearchParams(location.search).get('cache') !== 'intent') return;
+  let pending, warming;
+  function prepare(link) {
+    if (document.hidden || navigator.connection?.saveData || /^(slow-2g|2g)$/.test(navigator.connection?.effectiveType)) return;
+    const section = document.getElementById(link.hash.slice(1));
+    const v = section?.querySelector('video[src]');
+    if (!v || !v.paused || v.readyState >= 2 || v.preload !== 'none' || (warming && warming.networkState === 2)) return;
+    const busy = [...document.querySelectorAll('video')].some(other => {
+      if (other.paused || other.ended || other === v) return false;
+      for (let i = 0; i < other.buffered.length; i++) {
+        if (other.buffered.start(i) <= other.currentTime && other.buffered.end(i) >= Math.min(other.currentTime+4, other.duration)) return false;
+      }
+      return true;
+    });
+    if (busy) return;
+    warming = v;
+    v.preload = 'metadata';
+  }
+  for (const link of document.querySelectorAll('a[href^="#"]')) {
+    const schedule = () => { clearTimeout(pending); pending = setTimeout(() => prepare(link), 100); };
+    link.addEventListener('pointerenter', schedule);
+    link.addEventListener('focus', schedule);
+    link.addEventListener('pointerleave', () => clearTimeout(pending));
+    link.addEventListener('blur', () => clearTimeout(pending));
+  }
 })();
