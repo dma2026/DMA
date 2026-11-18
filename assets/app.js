@@ -1034,7 +1034,7 @@ const objectSplitOrder = [1, 0];
     const col = 2 + 2 * split;
     if (ab.pts) {
       const first = ab.pts[0], last = ab.pts.at(-1);
-      return `With the same 34 training objects, increasing demonstrations from ${first[0]} to ${last[0]} hours raises tracking success on ${group} from ${first[col-1]}% to ${last[col-1]}%.`;
+      return `With the same 34 training objects, increasing demonstrations from ${first[0]} to ${last[0]} hours raises tracking success on unseen tools from ${first[3]}% to ${last[3]}% and on seen objects from ${first[1]}% to ${last[1]}%.`;
     }
     const result = ab.rows.at(-1)[col].toFixed(1) + '%';
     if (ab === ABL.rep) {
@@ -1072,15 +1072,16 @@ const objectSplitOrder = [1, 0];
       settings[study].metric = i; draw('.rx-options button[aria-pressed=true]');
     });
     const order = real ? [0, 1] : objectSplitOrder;
-    const cards = h('div', { class: scale ? 'rx-cards rx-legend' : 'rx-cards', role: 'group', 'aria-label': real ? 'Deployment mode' : 'Evaluation split' }, order.map(i =>
+    const cards = scale ? h('div', { class: 'rx-legend', role: 'group', 'aria-label': 'Chart legend' },
+      order.map(i => h('span', { class: 's'+i, text: labels[i] }))) : h('div', { class: 'rx-cards', role: 'group', 'aria-label': real ? 'Deployment mode' : 'Evaluation split' }, order.map(i =>
       h('button', { type: 'button', class: 'rx-card', 'data-tone': i, 'aria-pressed': i === split, 'aria-controls': 'rx-chart', onclick: () => {
         settings[study].split = i; draw('.rx-card[aria-pressed=true]');
       } }, labels[i], real ? h('b', { title: 'Mean ' + metricName.toLowerCase(), text: reference[2+i*2+metric].toFixed(1)+'%' }) : sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(), text: reference[isError ? 4+metric*2+i : 2+i*2].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null)));
     const toolbar = h('div', { class: 'rx-toolbar' }, cards, optionsBar);
     const chart = h('div', { id: 'rx-chart', class: 'rx-chart', 'data-tone': split, role: 'group',
-      'aria-label': labels[split] + ' · ' + metricName });
+      'aria-label': (scale ? order.map(i => labels[i]).join(' and ') : labels[split]) + ' · ' + metricName });
     if (scale) {
-      chart.append(trend(ab.pts, split));
+      chart.append(trend(ab.pts));
     } else {
       const rows = sim ? simRows.map(r => ({ name: r[0], desc: r[1], own: r === reference, pair: sims(r) }))
         : real ? REAL.map(r => ({ name: r[0], own: r === reference, pair: [r[2+split*2+metric]],
@@ -1111,7 +1112,7 @@ const objectSplitOrder = [1, 0];
       }));
   }
 
-  function trend(pts, split) {
+  function trend(pts) {
     const svg = h('svg', { class: 'rx-trend', role: 'slider', tabindex: 0, 'aria-label': 'Training hours',
       'aria-valuemin': 1, 'aria-valuemax': 40.1 });
     let width = 700;
@@ -1130,9 +1131,9 @@ const objectSplitOrder = [1, 0];
         h('text', { x: left-8, y: y(v)+4, 'text-anchor': 'end', text: v })));
       pts.forEach(r => svg.append(h('text', { x: x(r[0]), y: height-27, 'text-anchor': 'middle', text: r[0] })));
       svg.append(h('line', { class: 'rx-guide', x1: x(p[0]), x2: x(p[0]), y1: y(100), y2: y(0) }));
-      [1-split,split].forEach(s => {
+      objectSplitOrder.forEach(s => {
         const col = 1+2*s, coord = (r,k) => x(r[0])+','+y(r[col]+k*r[col+1]);
-        const group = h('g', { class: 'rx-series s'+s, opacity: s === split ? 1 : .68 });
+        const group = h('g', { class: 'rx-series s'+s });
         group.append(h('polygon', { points: [...pts.map(r => coord(r,1)), ...[...pts].reverse().map(r => coord(r,-1))].join(' ') }),
           h('polyline', { points: pts.map(r => coord(r,0)).join(' ') }),
           ...pts.map((r,i) => h('circle', { cx: x(r[0]), cy: y(r[col]), r: i === hour ? 5 : 3.4 })));
