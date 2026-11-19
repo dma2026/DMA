@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-YPNjKuhW3Tlf8IE7cQ9tTh01zEDeTyAJG5Ma2uL7w0o=' 'sha256-AcgUM7PHxbWRjo77nYEtX39MncSBIMHXPf0y0cZBHj8=' 'sha256-t2uEG1Y720fg3ALUW206ouQa+Kq2++4BU4sqa4KdRkg=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-YPNjKuhW3Tlf8IE7cQ9tTh01zEDeTyAJG5Ma2uL7w0o=' 'sha256-FZGwm6OJtZPdGk/Zp8vmEaBX9EzwWzp/FTE1qLmY2u8=' 'sha256-t2uEG1Y720fg3ALUW206ouQa+Kq2++4BU4sqa4KdRkg=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-z/oSOYcvVD8c6xq5bGBJ9Wic59FLXqnkbJh4oqpVGQQ='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script id="segmented-player">/* A plain file GET per segment. The first file includes its initialization
    bytes, so a cold player can decode it before any other response arrives. */
 const DMASegments = (() => {
@@ -385,7 +385,14 @@ const DMAMedia = (() => {
           if (early) continuation=null;
           const begin=offset, request=early ? early.controller : new AbortController();
           const stop = () => request.abort();
-          const packed = () => { if (offset===begin && available()) stop(); };
+          let offerPack;
+          const readyPack = new Promise(resolve => { offerPack = resolve; });
+          const packed = () => {
+            const bytes = offset===begin && available();
+            if (!bytes) return;
+            if (compactOpening) offerPack({bytes});
+            else stop();
+          };
           const unused = () => {if (video.paused || document.hidden) stop();};
           let timer;
           const suspend = () => {clearTimeout(timer); timer=setTimeout(unused,350);};
@@ -407,18 +414,26 @@ const DMAMedia = (() => {
             };
             const body=receive();
             const open=compactOpening && begin===0 && openings[path];
-            if (open && !navigator.connection?.saveData) {
+            if (compactOpening) {
               // A cold CDN can take longer to start a large object than a small static file.
               // Whichever response delivers frames first feeds the same decoder.
               const small=new AbortController(), cancel=()=>small.abort();
               request.signal.addEventListener('abort',cancel,{once:true});
               try {
-                const starter=fetch(open[0],{signal:small.signal,priority:'high'}).then(async r=>{
+                const responses=[body.then(()=>null)];
+                if (open && !navigator.connection?.saveData) responses.push(fetch(open[0],{signal:small.signal,priority:'high'}).then(async r=>{
                   if(!r.ok) throw Error('Opening unavailable');
                   const reader=r.body.getReader();return {reader,packet:await reader.read()};
-                });
-                const opening=await Promise.any([body.then(()=>null),starter]);
-                if(opening) {
+                }));
+                // A cached prefix can start playback while the original request stays in flight.
+                const network=responses.length === 1 ? responses[0] : Promise.any(responses).catch(() => body);
+                const opening=await Promise.race([network,readyPack]);
+                if (opening?.bytes) {
+                  await append(opening.bytes);
+                  offset+=opening.bytes.length;
+                  const nextPrefix=available();
+                  if (nextPrefix) { await append(nextPrefix); offset+=nextPrefix.length; }
+                } else if(opening) {
                   // A slow opening response must not hold up a full stream that is ready.
                   let fullReady=false;
                   body.then(()=>{fullReady=true;cancel();},()=>{});
