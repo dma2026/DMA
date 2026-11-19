@@ -115,6 +115,6 @@ if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--ffmpeg", default="ffmpeg")
     args = cli.parse_args()
-    files = sorted(f for d in ("multi", "main", "sim/references") for f in (ROOT/"media"/d).glob("*.mp4"))
+    files = sorted(f for d in ("multi", "main", "sim/full-wrist") for f in (ROOT/"media"/d).glob("*.mp4"))
     result = {str(f.relative_to(ROOT)): build(f, args.ffmpeg) for f in files}
     (ROOT/"assets"/"segments"/"manifest.json").write_text(json.dumps(result,separators=(",",":"))+"\n")

@@ -353,7 +353,7 @@ const objectSplitOrder = [1, 0];
 
 /* Simulation references in the same row-major order as the overview film. */
 (function simulation() {
-  const media = file => 'media/sim/references/' + file + (file.endsWith('.mp4') ? '?v=reel3' : '?v=soft1');
+  const media = file => 'media/sim/full-wrist/' + file;
   const root = $('#sim-root');
   const files = SIM.map((_, i) => String(i + 1).padStart(2, '0'));
   const label = i => [files[i], SIM[i][1], SIM[i][3], SIM[i][2]].filter(Boolean).join(' · ');
