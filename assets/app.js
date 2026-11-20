@@ -76,8 +76,10 @@ const TELE = [
   { id: 'wrench', f: 't_wrench', name: 'T-handle wrench', sub: 'Tighten a bolt', stages: [S('Grasp', 0), S('Adjust', 3.2), S('Turn', 7.5), S('Place', 35)] },
 ];
 const MULTI = [
-  { f: 'screwdriver_bulb', title: 'Screwdriver, then light bulb', segs: [S('Screwdriver: tighten', 0), S('Light bulb: install', 46)] },
-  { f: 'twrench_hammer', title: 'T-handle wrench, then hammer', segs: [S('T-handle wrench: tighten', 0), S('Hammer: drive nail', 28)] },
+  { f: 'screwdriver-bulb-6675', title: 'Screwdriver, then light bulb', duration: 81.533, segs: [S('Screwdriver: tighten', 0), S('Light bulb: install', 41)] },
+  { f: 't-wrench-bulb', title: 'T-handle wrench, then light bulb', duration: 59.3, segs: [S('T-handle wrench: tighten', 0), S('Light bulb: install', 36)] },
+  { f: 'twrench_hammer', title: 'T-handle wrench, then hammer', duration: 57, segs: [S('T-handle wrench: tighten', 0), S('Hammer: drive nail', 28)] },
+  { f: 'bulb-screwdriver', title: 'Light bulb, then screwdriver', duration: 74.933, segs: [S('Light bulb: install', 0), S('Screwdriver: tighten', 28)] },
 ];
 const SIM = [
   [0, "Cylinder", "Rotation", "Ø50 × 90 mm"],
@@ -342,12 +344,12 @@ deck($('#deck-tools'), {
   },
 });
 
-/* ───────── level 3: two equal long runs ───────── */
+/* ───────── level 3: multi-tool runs ───────── */
 $('#duo').append(...MULTI.map(m => {
   const pl = player({ tag: 'Teleoperation · 1.0×' }), tl = stageStrip('tline', pl);
   pl.load(`media/multi/${m.f}.mp4`, `media/multi/${m.f}.jpg`);
   pl.video.addEventListener('loadedmetadata', () => tl.set(m.segs, pl.video.duration), { once: true });
-  tl.set(m.segs, 60);
+  tl.set(m.segs, m.duration);
   return h('div', { class: 'duo-item' }, pl.el, h('h3', { text: m.title }), tl.el);
 }));
 
