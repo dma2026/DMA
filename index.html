@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-oJatckK3dNsqtIt5RvtZQELGHY+ac4CBEfROpYfGzeY=' 'sha256-wsXis+mk86jasr/uEcioOB8XwqJF2PZ7ujQE0a1V1WU=' 'sha256-PIPKNs9wDrtetghVTUBa1TUyuY+vPpO7/8Orx7XtOdg=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-Mo6ldA5Seg5v++uVcAOdtbTkz53GIRF3IcikWAISZ1o='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-oJatckK3dNsqtIt5RvtZQELGHY+ac4CBEfROpYfGzeY=' 'sha256-r08bUZrek4K0/BoCoc156qQ9jfjAYxHXzI9HfrDFpLA=' 'sha256-PIPKNs9wDrtetghVTUBa1TUyuY+vPpO7/8Orx7XtOdg=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-Mo6ldA5Seg5v++uVcAOdtbTkz53GIRF3IcikWAISZ1o='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script id="segmented-player">/* A plain file GET per segment. The first file includes its initialization
    bytes, so a cold player can decode it before any other response arrives. */
 const DMASegments = (() => {
@@ -295,7 +295,7 @@ const DMAMedia = (() => {
         if (playing) video.play().catch(()=>{});
       };
       const url = DMASegments.attach(video,path,type,info[6],controller.signal,fallback,
-        position=>start(video,position),chapterTime);
+        position=>info[0]==='main' ? fallback() : start(video,position),chapterTime);
       active.set(video,{url,controller});
       video.src=url;
       if (resume) video.play().catch(()=>{});
