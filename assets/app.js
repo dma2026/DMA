@@ -154,9 +154,9 @@ const ABL = {
     rows: [['Uniform RSI', 'Every segment equally likely', 75.7, .2, 61.1, 6.6], ['Return-based', 'Low-return segments first', 78.3, .9, 65.1, 2.5], ['Return-based + exclusion', 'Ours', 80.4, .9, 69.7, 2.1]] },
   gate: { name: 'Reward gate',
     rows: [['Contact only', 'Object reward whenever two fingers touch', 74.2, .6, 60.6, 7.8], ['Always on', 'Object reward at every frame', 78.6, 1.5, 66.8, 6.0], ['Support label × contact', 'Ours', 80.4, .9, 69.7, 2.1]] },
-  inputs: { name: 'Critic / world-model inputs',
+  inputs: { name: 'Critic & world model',
     rows: [['Critic points', '7.4 h', 80.8, 1.3, 70.3, 1.9], ['World-model points', '7.0 h', 79.0, 1.1, 66.7, 2.1], ['Both', '9.6 h', 78.4, 1.1, 64.8, 1.1], ['Shared embedding (ours)', '4.7 h', 79.1, .6, 71.3, 2.0]] },
-  size: { name: 'Dataset size',
+  size: { name: 'Data scale',
     pts: [[1, 18.3, 1.5, 11.4, 1.7], [2.5, 22.7, 2.6, 17.6, 1.4], [5, 32.0, 1.9, 20.2, 4.4], [10, 53.6, 2.4, 34.3, 2.9], [20, 65.1, 1.6, 51.2, 7.5], [40.1, 80.4, .9, 69.7, 2.1]] },
 };
 
@@ -1034,9 +1034,10 @@ const objectSplitOrder = [1, 0];
 /* ───────── results explorer ───────── */
 (function results() {
   const host = $('#rx');
-  const studies = ['Simulation', 'Real world', 'Ablations', 'Training efficiency'];
+  const studies = ['Simulation', 'Real world', 'Ablations', 'Training analysis'];
   const metrics = ['Success rate', 'Object tracking', 'Hand tracking'];
-  const ablations = Object.values(ABL);
+  const ablations = [ABL.rep, ABL.samp, ABL.gate];
+  const trainingTopics = ['Training time', ABL.size.name, ABL.inputs.name];
   const settings = studies.map((_, i) => ({ metric: 0, split: i === 1 ? 0 : objectSplitOrder[0] }));
   let study = 0, hour = ABL.size.pts.length - 1;
   let trendObserver;
@@ -1070,55 +1071,55 @@ const objectSplitOrder = [1, 0];
 
   function draw(focus) {
     trendObserver?.disconnect();
-    if (study === 3) {
-      dashboard.replaceChildren(
-        h('div', { class:'rx-head' }, h('h3', {text:'Model-based RL vs. PPO'}),
-          h('p', {text:'On one H200, DMA reaches 77.0% success in 4.7 hours. PPO reaches a comparable success rate after about 18 hours on four H200s or 12 hours on eight.'})),
-        efficiencyChart(),
-        h('p', {class:'rx-standard', text:'Success across 435 test references. Each checkpoint is averaged over five evaluation seeds (training seed 42). Training time excludes evaluation.'}));
-      return;
-    }
     const { metric, split } = settings[study];
-    const sim = study === 0, real = study === 1, ab = ablations[metric];
-    const scale = study === 2 && !!ab.pts;
+    const sim = study === 0, real = study === 1, training = study === 3;
+    const timing = training && metric === 0;
+    const experiment = training ? [null, ABL.size, ABL.inputs][metric] : ablations[metric];
+    const scale = training && experiment === ABL.size;
     const isError = sim && metric > 0;
-    const options = sim ? metrics : real ? ['Success rate', 'Task progress'] : ablations.map(a => a.name);
-    const metricName = study === 2 ? 'Success rate' : options[metric];
-    const title = ['Comparison with baselines', 'Zero-shot tool use', 'Ablation study'][study];
+    const options = sim ? metrics : real ? ['Success rate', 'Task progress'] : training ? trainingTopics : ablations.map(a => a.name);
+    const metricName = sim || real ? options[metric] : 'Success rate';
+    const title = training ? ['Model-based RL vs. PPO', 'Demonstration data scale', 'Critic and world-model inputs'][metric]
+      : ['Comparison with baselines', 'Zero-shot tool use', 'Ablation study'][study];
     const labels = real ? ['Motion tracking', 'Teleoperation'] : ['Seen objects', 'Unseen objects'];
     const intro = sim
       ? 'DMA’s tracking success rate is 30.6 percentage points higher than the best baseline on seen objects and 37.0 points higher on unseen objects.'
       : real ? 'One policy performs six tasks with unseen tools. The robot completes every stage in 71.1% of trials when following recorded motions and 80.0% under live teleoperation.'
-      : ablationIntro(ab, split);
+      : timing ? 'On one H200, DMA reaches 77.0% success in 4.7 hours. PPO reaches a comparable success rate after about 18 hours on four H200s or 12 hours on eight.'
+      : ablationIntro(experiment, split);
     const header = h('div', { class: 'rx-head' }, h('h3', { text: title }), h('p', { text: intro }));
-    const optionsBar = buttons(options, metric, study === 2 ? 'Ablation' : 'Metric', 'rx-options', i => {
+    const optionsBar = buttons(options, metric, training ? 'Training analysis topic' : study === 2 ? 'Ablation' : 'Metric', 'rx-options', i => {
       settings[study].metric = i; draw('.rx-options button[aria-pressed=true]');
     });
     const order = real ? [0, 1] : objectSplitOrder;
-    const cards = scale ? h('div', { class: 'rx-legend', role: 'group', 'aria-label': 'Chart legend' },
+    const cards = timing ? h('div', {class:'rx-legend rx-eff-legend', role:'group', 'aria-label':'Chart legend'},
+      trainingRuns.map((r,i)=>h('span',{class:'run'+i,text:r.label}))) : scale ? h('div', { class: 'rx-legend', role: 'group', 'aria-label': 'Chart legend' },
       order.map(i => h('span', { class: 's'+i, text: labels[i] }))) : h('div', { class: 'rx-cards', role: 'group', 'aria-label': real ? 'Deployment mode' : 'Evaluation split' }, order.map(i =>
       h('button', { type: 'button', class: 'rx-card', 'data-tone': i, 'aria-pressed': i === split, 'aria-controls': 'rx-chart', onclick: () => {
         settings[study].split = i; draw('.rx-card[aria-pressed=true]');
       } }, labels[i])));
-    const toolbar = h('div', { class: 'rx-toolbar' }, cards, optionsBar);
+    const toolbar = h('div', { class: training ? 'rx-toolbar rx-training-toolbar' : 'rx-toolbar' }, cards, optionsBar);
     const chart = h('div', { id: 'rx-chart', class: 'rx-chart', 'data-tone': split, role: 'group',
-      'aria-label': (scale ? order.map(i => labels[i]).join(' and ') : labels[split]) + ' · ' + metricName });
-    if (scale) {
-      chart.append(trend(ab.pts));
+      'aria-label': timing ? 'Success rate versus training time' : (scale ? order.map(i => labels[i]).join(' and ') : labels[split]) + ' · ' + metricName });
+    if (timing) {
+      chart.append(efficiencyChart());
+    } else if (scale) {
+      chart.append(trend(experiment.pts));
     } else if (isError) {
       chart.append(trackingErrors(metric, split));
     } else {
       const rows = sim ? SIMRES.map(r => ({ name:r.name, desc:r.desc, own:r.name==='DMA', pair:r.sr[split] }))
         : real ? REAL.map(r => ({ name: r[0], own: r === REAL.at(-1), pair: [r[2+split*2+metric]],
             play: (split ? TELE : TRACK).some(clip => clip.id === r[1]) ? () => toolsDeck.open(split,r[1]) : null }))
-        : [...ab.rows].reverse().map(r => ({ name: r[0], desc: r === ab.rows.at(-1) ? 'DMA' : r[1], own: r === ab.rows.at(-1), time: ab === ABL.inputs ? r[1] : null, pair: r.slice(2 + split * 2, 4 + split * 2) }));
+        : [...experiment.rows].reverse().map(r => ({ name: r[0], desc: r === experiment.rows.at(-1) ? 'DMA' : r[1], own: r === experiment.rows.at(-1), time: experiment === ABL.inputs ? r[1] : null, pair: r.slice(2 + split * 2, 4 + split * 2) }));
       chart.append(bars(rows));
     }
     const standard = real ? (metric === 0 ? 'A trial succeeds if every stage is completed without dropping the tool (15 trials per task and mode).' : 'Task progress is the fraction of stages completed, averaged over 15 trials per task and mode.') : isError
       ? (metric === 2
         ? 'Fingertip error is measured in the palm frame. Joint error is the mean absolute finger joint angle error. Read both alongside success rate: errors cover only the interaction frames reached.'
         : 'Mean object translation and rotation errors over the interaction frames reached. SimToolReal measures error at object waypoints.')
-      : study === 2 && ab === ABL.inputs ? 'One H200, excluding evaluation. Success rates show mean ± SD over five evaluation seeds for training seed 42.'
+      : timing ? 'Success across 435 test references. Each checkpoint is averaged over five evaluation seeds (training seed 42). Training time excludes evaluation.'
+      : training && experiment === ABL.inputs ? 'One H200, excluding evaluation. Success rates show mean ± SD over five evaluation seeds for training seed 42.'
       : 'A rollout succeeds if the object stays within 50 mm and 45° of its reference pose at every frame of the motion.';
     chart.append(h('p', { class: 'rx-standard', text: standard }));
     dashboard.replaceChildren(header, toolbar, chart);
@@ -1167,7 +1168,6 @@ const objectSplitOrder = [1, 0];
 
   function efficiencyChart() {
     const svg=h('svg',{class:'rx-trend rx-eff-chart',role:'group','aria-label':'Tracking success versus training wall-clock time'});
-    const legend=h('div',{class:'rx-legend rx-eff-legend'},trainingRuns.map((r,i)=>h('span',{class:'run'+i,text:r.label})));
     const readout=h('output',{class:'rx-eff-value','aria-live':'off'});
     let width=760, selected=null;
     function paint() {
@@ -1223,7 +1223,7 @@ const objectSplitOrder = [1, 0];
       if(entry.contentRect.width>0 && width!==entry.contentRect.width){width=entry.contentRect.width;paint();}
     });
     trendObserver.observe(svg);
-    return h('div',{class:'rx-efficiency'},legend,svg,readout);
+    return h('div',{class:'rx-efficiency'},svg,readout);
   }
 
   function trend(pts) {

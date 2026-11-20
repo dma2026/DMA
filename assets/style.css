@@ -668,10 +668,10 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 .rx-runtime{display:block;color:var(--muted);font-size:12px}
 .rx-efficiency{margin-top:18px}
 .rx-eff-legend{gap:7px 20px}
-.rx-efficiency .run0{--series-color:#347c70}
-.rx-efficiency .run1{--series-color:#927744}
-.rx-efficiency .run2{--series-color:#aa715f}
-.rx-efficiency .run3{--series-color:#81709a}
+:is(.rx-efficiency,.rx-eff-legend) .run0{--series-color:#347c70}
+:is(.rx-efficiency,.rx-eff-legend) .run1{--series-color:#927744}
+:is(.rx-efficiency,.rx-eff-legend) .run2{--series-color:#aa715f}
+:is(.rx-efficiency,.rx-eff-legend) .run3{--series-color:#81709a}
 .rx-eff-chart .rx-series polyline{stroke-width:2}
 .rx-eff-chart .run0 polyline{stroke-width:3}
 .rx-eff-chart .rx-end-label{fill:currentColor;font-weight:600;paint-order:stroke;stroke:#f8fbfa;stroke-width:3px}
@@ -686,6 +686,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
   .rx-error-cell .rx-reading b{font-size:13px}
 }
 @media(max-width:520px){
+  .rx-training-toolbar .rx-options{order:-1}
   .rx-studies{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;border-radius:21px}
   .rx-studies button{padding-inline:5px}
 }
