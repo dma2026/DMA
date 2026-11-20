@@ -504,7 +504,6 @@ h3{margin:0;color:var(--ink);font-weight:600;letter-spacing:-.02em}
 .rx-legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;color:var(--body);font-size:14px}
 .rx-legend span{display:inline-flex;align-items:center;gap:6px}
 .rx-legend span::before{content:"";width:16px;height:3px;border-radius:2px;background:var(--series-color)}
-.rx-card b{font-size:18px;letter-spacing:-.035em;font-weight:650;font-variant-numeric:tabular-nums}
 .rx-chart{--label-col:185px;--num-col:110px;--gap:14px;--bar1:#bddbd3;--bar2:#96c1b7}
 .rx-chart[data-tone="1"]{--bar1:#d7d1e4;--bar2:#b2a5c8}
 .rx-bars{display:grid;gap:4px}
@@ -559,7 +558,7 @@ h3{margin:0;color:var(--ink);font-weight:600;letter-spacing:-.02em}
   .rx-options[aria-label="Ablation"]{display:grid;grid-template-columns:repeat(2,auto)}
   .rx-options button{padding:6px 8px;font-size:12px}
   .rx-card{gap:6px;min-height:44px;min-width:108px;padding:9px 10px 12px;font-size:13px}
-  .rx-card b{font-size:15px}
+
   .rx-cards{gap:5px}
   .rx-studies{margin:0 0 17px}
   .rx-standard{font-size:12px}
@@ -656,4 +655,37 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
  #datalab .datapair figcaption{font-size:12px}
  #datalab .arrow{flex-direction:column;font-size:9px}
  #datalab .arrow svg{width:27px;transform:none}
+}
+
+/* Paired tracking metrics share a method label and keep separate unit scales. */
+.rx-error-row,.rx-error-head{display:grid;grid-template-columns:var(--label-col) repeat(2,minmax(0,1fr));gap:var(--gap);align-items:center}
+.rx-error-head{padding:0 13px 4px;color:var(--body);font-size:13px}
+.rx-error-head>div:first-child{grid-column:2}
+.rx-error-head small{margin-inline-start:8px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rx-error-cell{display:grid;grid-template-columns:minmax(0,1fr) 5.4em;gap:8px;align-items:center}
+.rx-error-cell .rx-reading{grid-column:2}
+.rx-mobile-metric{display:none}
+.rx-runtime{display:block;color:var(--muted);font-size:12px}
+.rx-efficiency{margin-top:18px}
+.rx-eff-legend{gap:7px 20px}
+.rx-efficiency .run0{--series-color:#347c70}
+.rx-efficiency .run1{--series-color:#927744}
+.rx-efficiency .run2{--series-color:#aa715f}
+.rx-efficiency .run3{--series-color:#81709a}
+.rx-eff-chart .rx-series polyline{stroke-width:2}
+.rx-eff-chart .run0 polyline{stroke-width:3}
+.rx-eff-chart .rx-end-label{fill:currentColor;font-weight:600;paint-order:stroke;stroke:#f8fbfa;stroke-width:3px}
+.rx-eff-value{display:block;min-height:1.4em;text-align:center;color:var(--body);font-size:13px;font-variant-numeric:tabular-nums}
+@media(max-width:740px){
+  .rx-error-head{display:none}
+  .rx-error-row{grid-template-columns:minmax(0,1fr);gap:4px;padding:9px 7px}
+  .rx-error-cell{grid-template-columns:minmax(90px,30%) minmax(0,1fr) 4.6em}
+  .rx-error-cell .rx-track{height:14px}
+  .rx-error-cell .rx-reading{grid-column:3}
+  .rx-mobile-metric{display:block;font-size:12px;color:var(--muted)}
+  .rx-error-cell .rx-reading b{font-size:13px}
+}
+@media(max-width:520px){
+  .rx-studies{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;border-radius:21px}
+  .rx-studies button{padding-inline:5px}
 }

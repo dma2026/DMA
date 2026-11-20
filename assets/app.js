@@ -132,13 +132,14 @@ const SIM = [
 const SKILLS = [
   ['fingertip_rotation', 'Fingertip rotation'], ['in_palm_rotation', 'In-palm rotation'], ['pivoting', 'Pivoting'], ['rod_rotation', 'Rod rotation'], ['translation', 'Translation'],
 ];
-const SIMRES = [ // [SR seen, sd, SR unseen, sd, Epos seen, unseen, Erot seen, unseen]
-  ['Retarget replay', 'Open-loop joint playback', 0, null, 0, null, 20.44, 17.23, 14.81, 14.69],
-  ['SPIDER', 'Per-reference trajectory optimization', 9.7, .5, .5, .5, 21.97, 18.31, 6.38, 5.94],
-  ['DexTrack', 'Generalist tracker, retrained on DexEmpla', 10.3, .6, 0, 0, 15.17, 14.65, 18.81, 15.81],
-  ['SimToolReal', 'Object-centric, no hand reference', 32.6, 1.3, 9.5, 1.4, 20.70, 20.85, 24.66, 23.34],
-  ['ConTrack specialist', 'One policy trained per test reference', 51.2, .7, 35.3, 1.3, 17.47, 16.17, 10.59, 9.85],
-  ['DMA', 'One policy for all references', 80.4, .9, 69.7, 2.1, 9.14, 9.02, 8.30, 8.41],
+// Table IV. Each metric is ordered [seen, unseen]; success entries are [mean, SD].
+const SIMRES = [
+  {name:'DMA', desc:'One policy for all references', sr:[[80.4,.9],[69.7,2.1]], position:[9.14,9.02], rotation:[8.30,8.41], fingertip:[8.71,6.38], joint:[5.32,4.25]},
+  {name:'ConTrack specialist', desc:'One policy per test reference; 312 seen references with interaction frames. Errors include the failure frame.', sr:[[49.8,1.0],[32.7,1.8]], position:[17.56,16.22], rotation:[10.79,10.19], fingertip:[14.76,15.13], joint:[9.34,9.07]},
+  {name:'SimToolReal', desc:'Evaluated on object waypoints; 267 reachable seen references. No hand reference.', sr:[[32.6,1.3],[9.5,1.4]], position:[20.70,20.85], rotation:[24.66,23.34], fingertip:[null,null], joint:[null,null]},
+  {name:'DexTrack', desc:'Retrained on DexEmpla; 312 seen references with interaction frames. Errors include the failure frame.', sr:[[14.2,.8],[0,0]], position:[13.45,15.47], rotation:[18.43,17.04], fingertip:[12.44,14.12], joint:[8.41,8.91]},
+  {name:'SPIDER', desc:'Optimized per test reference; 312 seen references with interaction frames. Errors include the failure frame.', sr:[[9.7,.5],[.5,.5]], position:[21.97,18.31], rotation:[6.38,5.94], fingertip:[10.75,8.47], joint:[5.53,4.27]},
+  {name:'Retarget replay', desc:'Open-loop joint playback; 312 seen references with interaction frames. Errors include the failure frame.', sr:[[0,null],[0,null]], position:[20.44,17.23], rotation:[14.81,14.69], fingertip:[1.88,1.98], joint:[.71,.68]},
 ];
 const REAL = [ // [task, id, track SR, track TP, tele SR, tele TP]
   ['Hammer: drive nail', 'drive', 86.7, 93.3, 93.3, 98.3], ['Hammer: pull nail', 'pull', 66.7, 82.2, 73.3, 85.6],
@@ -153,6 +154,8 @@ const ABL = {
     rows: [['Uniform RSI', 'Every segment equally likely', 75.7, .2, 61.1, 6.6], ['Return-based', 'Low-return segments first', 78.3, .9, 65.1, 2.5], ['Return-based + exclusion', 'Ours', 80.4, .9, 69.7, 2.1]] },
   gate: { name: 'Reward gate',
     rows: [['Contact only', 'Object reward whenever two fingers touch', 74.2, .6, 60.6, 7.8], ['Always on', 'Object reward at every frame', 78.6, 1.5, 66.8, 6.0], ['Support label × contact', 'Ours', 80.4, .9, 69.7, 2.1]] },
+  inputs: { name: 'Critic / world-model inputs',
+    rows: [['Critic points', '7.4 h', 80.8, 1.3, 70.3, 1.9], ['World-model points', '7.0 h', 79.0, 1.1, 66.7, 2.1], ['Both', '9.6 h', 78.4, 1.1, 64.8, 1.1], ['Shared embedding (ours)', '4.7 h', 79.1, .6, 71.3, 2.0]] },
   size: { name: 'Dataset size',
     pts: [[1, 18.3, 1.5, 11.4, 1.7], [2.5, 22.7, 2.6, 17.6, 1.4], [5, 32.0, 1.9, 20.2, 4.4], [10, 53.6, 2.4, 34.3, 2.9], [20, 65.1, 1.6, 51.2, 7.5], [40.1, 80.4, .9, 69.7, 2.1]] },
 };
@@ -1031,15 +1034,9 @@ const objectSplitOrder = [1, 0];
 /* ───────── results explorer ───────── */
 (function results() {
   const host = $('#rx');
-  const studies = ['Simulation', 'Real world', 'Ablations'];
-  const metrics = ['Success rate', 'Position error', 'Orientation error'];
+  const studies = ['Simulation', 'Real world', 'Ablations', 'Training efficiency'];
+  const metrics = ['Success rate', 'Object tracking', 'Hand tracking'];
   const ablations = Object.values(ABL);
-  const simRows = [...SIMRES].sort((a, b) => b[2] - a[2]);
-  const errorSD = { // Position (seen, unseen), then orientation (seen, unseen).
-    DMA: [.20, .42, .22, .59], 'ConTrack specialist': [.05, .18, .11, .07],
-    SimToolReal: [.44, .43, .33, .31], DexTrack: [.06, .05, .04, .09],
-    SPIDER: [.14, .17, .08, .05], 'Retarget replay': [.07, .05, .06, .04],
-  };
   const settings = studies.map((_, i) => ({ metric: 0, split: i === 1 ? 0 : objectSplitOrder[0] }));
   let study = 0, hour = ABL.size.pts.length - 1;
   let trendObserver;
@@ -1058,6 +1055,7 @@ const objectSplitOrder = [1, 0];
       return `With the same 34 training objects, increasing demonstrations from ${first[0]} to ${last[0]} hours raises tracking success on unseen tools from ${first[3]}% to ${last[3]}% and on seen objects from ${first[1]}% to ${last[1]}%.`;
     }
     const result = ab.rows.at(-1)[col].toFixed(1) + '%';
+    if (ab === ABL.inputs) return 'Using a shared object embedding takes 4.7 hours to train. Giving the critic or world model its own local surface points takes 7.0–9.6 hours.';
     if (ab === ABL.rep) {
       const global = ab.rows.find(r => r[0] === 'Global64')[col].toFixed(1) + '%';
       return `On ${group}, hand-guided surface points reach ${result} tracking success, compared with ${global} for points sampled across the whole object.`;
@@ -1072,20 +1070,24 @@ const objectSplitOrder = [1, 0];
 
   function draw(focus) {
     trendObserver?.disconnect();
+    if (study === 3) {
+      dashboard.replaceChildren(
+        h('div', { class:'rx-head' }, h('h3', {text:'Model-based RL vs. PPO'}),
+          h('p', {text:'On one H200, DMA reaches 77.0% success in 4.7 hours. PPO reaches a comparable success rate after about 18 hours on four H200s or 12 hours on eight.'})),
+        efficiencyChart(),
+        h('p', {class:'rx-standard', text:'Success across 435 test references. Each checkpoint is averaged over five evaluation seeds (training seed 42). Training time excludes evaluation.'}));
+      return;
+    }
     const { metric, split } = settings[study];
     const sim = study === 0, real = study === 1, ab = ablations[metric];
     const scale = study === 2 && !!ab.pts;
     const isError = sim && metric > 0;
-    const unit = isError ? (metric === 1 ? 'mm' : '°') : '%';
-    const decimals = isError ? 2 : 1;
     const options = sim ? metrics : real ? ['Success rate', 'Task progress'] : ablations.map(a => a.name);
     const metricName = study === 2 ? 'Success rate' : options[metric];
     const title = ['Comparison with baselines', 'Zero-shot tool use', 'Ablation study'][study];
     const labels = real ? ['Motion tracking', 'Teleoperation'] : ['Seen objects', 'Unseen objects'];
-    const sims = r => isError ? [r[4 + metric * 2 + split], errorSD[r[0]][(metric - 1) * 2 + split]] : [r[2 + split * 2], r[3 + split * 2]];
-    const reference = sim ? simRows[0] : real ? REAL.at(-1) : scale ? ab.pts[hour] : ab.rows.at(-1);
     const intro = sim
-      ? 'A single DMA policy tracks held-out motions on 34 training objects and nine unseen tools. It achieves the highest success rate and the lowest position error on both sets.'
+      ? 'DMA’s tracking success rate is 30.6 percentage points higher than the best baseline on seen objects and 37.0 points higher on unseen objects.'
       : real ? 'One policy performs six tasks with unseen tools. The robot completes every stage in 71.1% of trials when following recorded motions and 80.0% under live teleoperation.'
       : ablationIntro(ab, split);
     const header = h('div', { class: 'rx-head' }, h('h3', { text: title }), h('p', { text: intro }));
@@ -1097,40 +1099,131 @@ const objectSplitOrder = [1, 0];
       order.map(i => h('span', { class: 's'+i, text: labels[i] }))) : h('div', { class: 'rx-cards', role: 'group', 'aria-label': real ? 'Deployment mode' : 'Evaluation split' }, order.map(i =>
       h('button', { type: 'button', class: 'rx-card', 'data-tone': i, 'aria-pressed': i === split, 'aria-controls': 'rx-chart', onclick: () => {
         settings[study].split = i; draw('.rx-card[aria-pressed=true]');
-      } }, labels[i], real ? h('b', { title: 'Mean ' + metricName.toLowerCase(), text: reference[2+i*2+metric].toFixed(1)+'%' }) : sim ? h('b', { title: 'DMA ' + metricName.toLowerCase(), text: reference[isError ? 4+metric*2+i : 2+i*2].toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }) : null)));
+      } }, labels[i])));
     const toolbar = h('div', { class: 'rx-toolbar' }, cards, optionsBar);
     const chart = h('div', { id: 'rx-chart', class: 'rx-chart', 'data-tone': split, role: 'group',
       'aria-label': (scale ? order.map(i => labels[i]).join(' and ') : labels[split]) + ' · ' + metricName });
     if (scale) {
       chart.append(trend(ab.pts));
+    } else if (isError) {
+      chart.append(trackingErrors(metric, split));
     } else {
-      const rows = sim ? simRows.map(r => ({ name: r[0], desc: r[1], own: r === reference, pair: sims(r) }))
-        : real ? REAL.map(r => ({ name: r[0], own: r === reference, pair: [r[2+split*2+metric]],
+      const rows = sim ? SIMRES.map(r => ({ name:r.name, desc:r.desc, own:r.name==='DMA', pair:r.sr[split] }))
+        : real ? REAL.map(r => ({ name: r[0], own: r === REAL.at(-1), pair: [r[2+split*2+metric]],
             play: (split ? TELE : TRACK).some(clip => clip.id === r[1]) ? () => toolsDeck.open(split,r[1]) : null }))
-        : [...ab.rows].reverse().map(r => ({ name: r[0], desc: r === reference ? 'DMA' : r[1], own: r === reference, pair: r.slice(2 + split * 2, 4 + split * 2) }));
-      chart.append(bars(rows, isError ? 25 : 100, decimals, unit));
+        : [...ab.rows].reverse().map(r => ({ name: r[0], desc: r === ab.rows.at(-1) ? 'DMA' : r[1], own: r === ab.rows.at(-1), time: ab === ABL.inputs ? r[1] : null, pair: r.slice(2 + split * 2, 4 + split * 2) }));
+      chart.append(bars(rows));
     }
     const standard = real ? (metric === 0 ? 'A trial succeeds if every stage is completed without dropping the tool (15 trials per task and mode).' : 'Task progress is the fraction of stages completed, averaged over 15 trials per task and mode.') : isError
-      ? 'Mean errors are measured over interaction frames before the first failure.'
+      ? (metric === 2
+        ? 'Fingertip error is measured in the palm frame. Joint error is the mean absolute finger joint angle error. Read both alongside success rate: errors cover only the interaction frames reached.'
+        : 'Mean object translation and rotation errors over the interaction frames reached. SimToolReal measures error at object waypoints.')
+      : study === 2 && ab === ABL.inputs ? 'One H200, excluding evaluation. Success rates show mean ± SD over five evaluation seeds for training seed 42.'
       : 'A rollout succeeds if the object stays within 50 mm and 45° of its reference pose at every frame of the motion.';
     chart.append(h('p', { class: 'rx-standard', text: standard }));
     dashboard.replaceChildren(header, toolbar, chart);
     if (focus) dashboard.querySelector(focus)?.focus({ preventScroll: true });
   }
 
-  function bars(rows, max, decimals, unit) {
-    const ticks = max === 25 ? [0,5,10,15,20,25] : [0,25,50,75,100];
+  function bars(rows) {
+    const max = 100, ticks = [0,25,50,75,100];
     const axis = h('div', { class: 'rx-axis', 'aria-hidden': 'true' }, ticks.map(n =>
       h('span', { css: { left: (100*n/max) + '%' }, text: n })));
     return h('div', { class: 'rx-bars' }, h('div', { class: 'rx-axisrow' }, axis),
-      rows.map(({ name, desc, own, play, pair: [value, sd] }) => {
+      rows.map(({ name, desc, own, play, time, pair: [value, sd] }) => {
         const label = play ? h('a', { href: '#level-2', onclick: play, title: 'Play ' + name }, name, h('span', { 'aria-hidden': true, text: ' ↗' })) : h('b', { text: name });
         return h('div', { class: 'rx-row' + (own ? ' ours' : '') },
-          h('div', { class: 'rx-method', title: desc }, label),
+          h('div', { class: 'rx-method', title: desc }, label, time ? h('small', {class:'rx-runtime', text:time}) : null),
           h('div', { class: 'rx-track', 'aria-hidden': 'true' }, h('i', { css: { width: (100*value/max) + '%' } })),
-          h('div', { class: 'rx-reading' }, h('b', { text: value.toFixed(decimals) + (unit === 'mm' ? ' mm' : unit) }),
-            sd == null ? null : h('small', { text: '± ' + sd.toFixed(decimals) })));
+          h('div', { class: 'rx-reading' }, h('b', { text: value.toFixed(1) + '%' }),
+            sd == null ? null : h('small', { text: '± ' + sd.toFixed(1) })));
       }));
+  }
+
+  const trainingRuns = [
+    { label:'DMA · 1×H200', points:[[0.0,0.69],[0.1207,23.59],[0.2393,38.07],[0.3576,45.93],[0.4758,47.03],[0.594,46.11],[0.7119,55.82],[0.83,57.43],[0.9481,59.45],[1.0663,55.72],[1.1846,55.77],[1.3029,61.06],[1.421,61.47],[1.5393,61.75],[1.6575,60.28],[1.7756,64.83],[1.8936,63.08],[2.0119,68.28],[2.1303,69.15],[2.2483,64.55],[2.3664,66.99],[2.4841,69.7],[2.6019,70.07],[2.7197,71.72],[2.8376,73.06],[2.9554,70.07],[3.0732,73.15],[3.1908,72.55],[3.3084,73.84],[3.4261,74.8],[3.5439,70.53],[3.6616,76.41],[3.7793,74.11],[3.8969,75.03],[4.0145,75.95],[4.132,76.14],[4.2496,73.66],[4.3673,75.08],[4.4849,76.09],[4.6023,77.06],[4.7196,76.97]] },
+    { label:'PPO · 1×H200', points:[[0.0,0.69],[0.2047,1.7],[0.4164,2.3],[0.6292,2.21],[0.8425,3.45],[1.0561,4.18],[1.2694,5.29],[1.4822,5.79],[1.6953,8.37],[1.9089,9.43],[2.0878,10.67],[3.1367,20.0],[4.1872,25.61],[5.2467,29.84],[6.3081,39.31],[7.3647,45.01],[8.4169,47.03],[9.4683,45.89],[10.5164,46.8],[11.5719,49.7],[12.6317,48.55],[13.6842,53.33],[14.7397,54.53],[15.7947,52.46],[16.9161,53.38],[17.9797,53.61],[19.0481,55.95],[20.1197,54.21],[21.1883,54.57]] },
+    { label:'PPO · 4×H200', points:[[0.0,0.69],[0.2081,2.07],[0.4217,2.11],[0.6375,2.9],[0.8542,5.43],[1.0714,6.57],[1.2878,10.3],[1.5044,11.03],[1.7203,13.15],[1.9364,13.79],[2.1519,15.26],[2.9072,21.29],[3.2306,21.89],[4.31,30.48],[5.3961,43.03],[6.4769,51.4],[7.5578,59.08],[8.6381,65.43],[9.715,65.38],[10.7975,68.32],[11.8797,69.1],[12.9642,72.32],[14.05,71.86],[15.1328,74.3],[16.2144,73.33],[17.2989,74.71],[18.3844,77.2],[19.4694,77.79],[20.5556,76.51],[21.6406,76.41]] },
+    { label:'PPO · 8×H200', points:[[0.0,0.69],[0.2058,2.34],[0.4181,2.25],[0.6317,3.59],[0.8464,5.98],[1.0617,7.22],[1.2772,8.97],[1.4919,10.48],[1.7067,11.49],[1.9217,12.41],[2.1361,14.07],[3.2056,23.45],[4.2764,38.07],[5.3508,49.47],[6.4269,55.31],[7.5061,62.62],[8.5836,67.03],[9.6681,73.06],[10.755,74.25],[11.8444,78.34],[12.935,77.56],[14.0256,79.59],[15.1158,77.79],[16.2075,79.31],[17.3006,79.22],[18.3925,79.08],[19.4864,81.06],[20.5783,81.7],[21.6689,79.86]] },
+  ];
+  function trackingErrors(metric, split) {
+    const columns = metric === 1
+      ? [['position', 'Position error', 'mm', 25], ['rotation', 'Rotation error', '°', 25]]
+      : [['fingertip', 'Fingertip error', 'mm', 16], ['joint', 'Joint angle error', '°', 10]];
+    const heading = h('div', {class:'rx-error-head'}, columns.map(([,label,unit,max]) =>
+      h('div', {}, h('b', {text:label+' ('+unit+')'}), h('small', {text:'0 – '+max}))));
+    return h('div', {class:'rx-bars rx-errors'}, heading, SIMRES.map(row =>
+      h('div', {class:'rx-row rx-error-row'+(row.name==='DMA'?' ours':'')},
+        h('div', {class:'rx-method', title:row.desc}, h('b', {text:row.name})),
+        columns.map(([key,label,unit,max]) => {
+          const value=row[key][split];
+          return h('div', {class:'rx-error-cell',role:'group','aria-label':label},
+            h('span', {class:'rx-mobile-metric',text:label}),
+            value == null ? null : h('div', {class:'rx-track','aria-hidden':true},
+              h('i', {css:{width:(100*value/max)+'%'}})),
+            h('div', {class:'rx-reading'}, h('b', {text:value==null?'—':value.toFixed(2)+(unit==='mm'?' mm':unit)})));
+        }))));
+  }
+
+  function efficiencyChart() {
+    const svg=h('svg',{class:'rx-trend rx-eff-chart',role:'group','aria-label':'Tracking success versus training wall-clock time'});
+    const legend=h('div',{class:'rx-legend rx-eff-legend'},trainingRuns.map((r,i)=>h('span',{class:'run'+i,text:r.label})));
+    const readout=h('output',{class:'rx-eff-value','aria-live':'off'});
+    let width=760, selected=null;
+    function paint() {
+      const height=Math.max(225,Math.round(width*.44)), left=37, right=width-30, bottom=height-41;
+      const x=t=>left+(right-left)*t/24, y=s=>bottom-(bottom-29)*s/90;
+      svg.setAttribute('viewBox','0 0 '+width+' '+height);
+      svg.replaceChildren(h('text',{x:left,y:15,text:'Success rate (%)'}),
+        h('text',{x:(left+right)/2,y:height-3,'text-anchor':'middle',text:'Training wall-clock time (h)'}));
+      for(const n of [0,20,40,60,80]) svg.append(h('line',{class:'rx-grid',x1:left,x2:right,y1:y(n),y2:y(n)}),
+        h('text',{x:left-8,y:y(n)+4,'text-anchor':'end',text:n}));
+      for(const t of [0,4,8,12,16,20,24]) svg.append(h('text',{x:x(t),y:bottom+18,'text-anchor':'middle',text:t}));
+      trainingRuns.forEach((r,i)=>{
+        const [t,s]=r.points.at(-1);
+        svg.append(h('g',{class:'rx-series run'+i},
+          h('polyline',{points:r.points.map(([t,s])=>x(t)+','+y(s)).join(' ')}),
+          h('text',{class:'rx-end-label',x:x(t)+5,y:y(s)+(i===3?-4:i===2?10:3),text:s.toFixed(1)})));
+      });
+      if(selected) {
+        const [ri,pi]=selected, run=trainingRuns[ri], [t,s]=run.points[pi];
+        svg.append(h('g',{class:'rx-series run'+ri},h('line',{class:'rx-guide',x1:x(t),x2:x(t),y1:y(s),y2:bottom}),
+          h('circle',{cx:x(t),cy:y(s),r:4})));
+        readout.textContent=run.label+' · '+t.toFixed(2)+' h · '+s.toFixed(1)+'%';
+      } else readout.textContent='';
+      function inspect(e) {
+        const rect=svg.getBoundingClientRect(), px=(e.clientX-rect.left)*width/rect.width, py=(e.clientY-rect.top)*height/rect.height;
+        let distance=Infinity, nearest;
+        trainingRuns.forEach((r,i)=>r.points.forEach(([t,s],j)=>{
+          const d=Math.hypot(x(t)-px,y(s)-py);
+          if(d<distance){distance=d;nearest=[i,j];}
+        }));
+        selected=nearest;paint();
+      }
+      svg.onpointermove=e=>{if(e.pointerType==='mouse')inspect(e);};
+      svg.onclick=inspect;
+    }
+    svg.setAttribute('tabindex','0');
+    svg.onkeydown=e=>{
+      if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+      e.preventDefault();
+      let [r,i]=selected||[0,0];
+      if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+        const t=trainingRuns[r].points[i][0];
+        r=(r+(e.key==='ArrowUp'?-1:1)+trainingRuns.length)%trainingRuns.length;
+        i=trainingRuns[r].points.reduce((best,p,j,a)=>Math.abs(p[0]-t)<Math.abs(a[best][0]-t)?j:best,0);
+      } else {
+        const last=trainingRuns[r].points.length-1;
+        i=e.key==='Home'?0:e.key==='End'?last:Math.min(last,Math.max(0,i+(e.key==='ArrowLeft'?-1:1)));
+      }
+      selected=[r,i];paint();
+    };
+    paint();
+    trendObserver=new ResizeObserver(([entry])=>{
+      if(entry.contentRect.width>0 && width!==entry.contentRect.width){width=entry.contentRect.width;paint();}
+    });
+    trendObserver.observe(svg);
+    return h('div',{class:'rx-efficiency'},legend,svg,readout);
   }
 
   function trend(pts) {
@@ -1138,7 +1231,7 @@ const objectSplitOrder = [1, 0];
       'aria-valuemin': 1, 'aria-valuemax': 40.1 });
     let width = 700;
     const left = 38, right = 32;
-    const x = t => left + Math.log(t)/Math.log(40.1)*(width-left-right);
+    const x = t => left + t/42*(width-left-right);
     function paint() {
       const height = Math.max(224, Math.round(width*.44));
       const y = v => height-46 - v/100*(height-82);
@@ -1147,10 +1240,10 @@ const objectSplitOrder = [1, 0];
       svg.setAttribute('aria-valuenow', p[0]);
       svg.setAttribute('aria-valuetext', p[0]+' training hours, seen objects '+p[1]+' percent, unseen objects '+p[3]+' percent');
       svg.replaceChildren(h('text', { x: left, y: 16, text: 'Success rate (%)' }),
-        h('text', { x: (width+left-right)/2, y: height-4, 'text-anchor': 'middle', text: 'Training hours (log scale)' }));
+        h('text', { x: (width+left-right)/2, y: height-4, 'text-anchor': 'middle', text: 'Demonstration hours' }));
       [0,25,50,75,100].forEach(v => svg.append(h('line', { class: 'rx-grid', x1: left, x2: width-right, y1: y(v), y2: y(v) }),
         h('text', { x: left-8, y: y(v)+4, 'text-anchor': 'end', text: v })));
-      pts.forEach(r => svg.append(h('text', { x: x(r[0]), y: height-27, 'text-anchor': 'middle', text: r[0] })));
+      [0,10,20,30,40].forEach(t => svg.append(h('text', { x:x(t), y:height-27, 'text-anchor':'middle', text:t })));
       svg.append(h('line', { class: 'rx-guide', x1: x(p[0]), x2: x(p[0]), y1: y(100), y2: y(0) }));
       objectSplitOrder.forEach(s => {
         const col = 1+2*s, coord = (r,k) => x(r[0])+','+y(r[col]+k*r[col+1]);
