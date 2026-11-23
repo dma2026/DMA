@@ -669,7 +669,7 @@ const objectSplitOrder = [1, 0];
   const stats = $('#datastats');
   const num = (v, dec, label) => h('div', { class: 'stat' }, h('b', { 'data-count': v, 'data-dec': dec, text: '0' }), h('span', { text: label }));
   // DexEmpla statistics, tab:data, Train / Hours. The manuscript reports hours to one decimal.
-  const MIX = [['Rotation', 12.1, '#7ea99d'], ['Translation', 3.7, '#d1ab92'], ['Combination', 24.3, '#a8a2bc']];
+  const MIX = [['Rotation', 12.1, 'color-mix(in srgb,var(--blue) 61%,white)'], ['Translation', 3.7, 'color-mix(in srgb,var(--orange) 58%,white)'], ['Combination', 24.3, 'color-mix(in srgb,var(--green) 65%,white)']];
   const totalHours = MIX.reduce((sum, [, hours]) => sum + hours, 0);
   const heading = h('h3', {text:'Training hours by skill'});
   const card = h('div', {class:'stat mix'});
@@ -843,7 +843,7 @@ const objectSplitOrder = [1, 0];
     const defs=document.createElementNS(NS,'defs');
     const tip=document.createElementNS(NS,'marker');
     for(const [key,value] of Object.entries({id:'md-net-tip-'+kind,viewBox:'0 0 6 8',refX:5,refY:4,markerWidth:4,markerHeight:5,orient:'auto'})) tip.setAttribute(key,value);
-    tip.append(h('path',{d:'M1 1 L5 4 L1 7',fill:'none',stroke:'#76938d','stroke-linecap':'round','stroke-linejoin':'round'}));
+    tip.append(h('path',{d:'M1 1 L5 4 L1 7',fill:'none',stroke:'var(--flow)','stroke-linecap':'round','stroke-linejoin':'round'}));
     defs.append(tip);svg.append(defs);
     function edge(x1,y1,x2,y2,tip=false) {
       svg.append(h('line',{x1:x1+'%',y1:y1+'%',x2:x2+'%',y2:y2+'%',
@@ -861,7 +861,7 @@ const objectSplitOrder = [1, 0];
   }
   const world=module('world',title('World model'),h('span',{class:'md-world-body'},network(true),
     h('span',{class:'md-output-list'},heads.map(([key,text])=>h('span',{},scene(key),label(text))))));
-  const policyTitle=text=>h('span',{class:'md-policy-name'},asset('policy-mark','','svg'),title(text));
+  const policyTitle=text=>h('span',{class:'md-policy-name'},h('img',{src:'assets/mark.svg?v=mist',alt:''}),title(text));
   const policy=module('policy',policyTitle('Policy'),network(false));
   const tracking=module('tracking',title('Unseen-object tracking'),scene('sequence'),h('span',{class:'md-tools'},
     [['screwdriver','Screwdriver'],['wrench','Wrench'],['spray','Spray bottle'],['bulb','Light bulb']].map(([key,name])=>asset('unseen-'+key,name))));
@@ -958,7 +958,7 @@ const objectSplitOrder = [1, 0];
     if(!bounds.width) return;
     const tip=document.createElementNS(NS,'marker');
     for(const [key,value] of Object.entries({id:'md-flow-tip',viewBox:'0 0 8 8',refX:7,refY:4,markerWidth:7,markerHeight:7,markerUnits:'userSpaceOnUse',orient:'auto'})) tip.setAttribute(key,value);
-    tip.append(h('path',{d:'M2 1 L7 4 L2 7',fill:'none',stroke:'#288476','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round'}));
+    tip.append(h('path',{d:'M2 1 L7 4 L2 7',fill:'none',stroke:'var(--blue)','stroke-width':1.7,'stroke-linecap':'round','stroke-linejoin':'round'}));
     const defs=document.createElementNS(NS,'defs');defs.append(tip);
     const svgNodes=[defs], routes=[];
     const box=id=>{
@@ -978,7 +978,7 @@ const objectSplitOrder = [1, 0];
       if(word==='PointNet') {
         g.append(h('rect',{x:pos[0]-30,y:pos[1]-10,width:60,height:20,rx:7,class:'md-pointnet-frame'}),h('text',{x:pos[0],y:pos[1]+3.5,'text-anchor':'middle',text:word}));
       } else if(word==='rₜ') {
-        const gate=h('g',{transform:'translate('+pos.join(' ')+')'},h('rect',{x:-9,y:-11,width:18,height:22,fill:'#f3f7f8'}),
+        const gate=h('g',{transform:'translate('+pos.join(' ')+')'},h('rect',{x:-9,y:-11,width:18,height:22,fill:'var(--well)'}),
           h('path',{class:'md-gate-lever',d:'M0 7 L-7 -7'}),h('circle',{class:'md-terminal',cx:0,cy:-7,r:2}),h('circle',{class:'md-terminal',cx:0,cy:7,r:2}),
           h('text',{x:10,y:3,text:word}));
         g.append(gate);

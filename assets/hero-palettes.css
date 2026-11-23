@@ -1,4 +1,3 @@
-html[data-hero="a"]{--hero-bg:#e7f1ed;--hero-ink:#143d38;--hero-soft:#416259;--hero-accent:#35796a;--hero-on-accent:#fff;--hero-glow:#fbfcf6}
 html[data-hero]:not([data-hero="original"]) .hero{background:radial-gradient(ellipse at 95% 40%,var(--hero-glow),transparent 67%),var(--hero-bg)}
 html[data-hero]:not([data-hero="original"]) .hero::before{background:
   linear-gradient(90deg,transparent calc(var(--free,58vw) - 170px),var(--hero-bg) calc(var(--free,58vw) + 96px),transparent 100%),
