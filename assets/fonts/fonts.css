@@ -1,46 +1,15 @@
 @font-face {
-  font-family: 'DM Sans';
+  font-family: Geist;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 900;
   font-display: swap;
-  src: url(font-0.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url(font-1.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url(font-2.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(font-3.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'Instrument Serif';
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url(font-4.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'Instrument Serif';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(font-5.woff2) format('woff2');
+  src: url(geist-variable.woff2) format('woff2');
 }
 
-/* Nunito: paper Figure 1 wordmark styling. SIL OFL in NUNITO-OFL.txt. */
-@font-face{font-family:'Nunito';font-style:normal;font-weight:800;font-display:swap;src:url(nunito-800.woff2) format('woff2')}
-@font-face{font-family:'Nunito';font-style:italic;font-weight:800;font-display:swap;src:url(nunito-800-italic.woff2) format('woff2')}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(geist-mono-variable.woff2) format('woff2');
+}

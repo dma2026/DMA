@@ -1,9 +1,9 @@
-html[data-hero]:not([data-hero="original"]) .hero{background:radial-gradient(ellipse at 95% 40%,var(--hero-glow),transparent 67%),var(--hero-bg)}
-html[data-hero]:not([data-hero="original"]) .hero::before{background:
-  linear-gradient(90deg,transparent calc(var(--free,58vw) - 170px),var(--hero-bg) calc(var(--free,58vw) + 96px),transparent 100%),
-  linear-gradient(180deg,color-mix(in srgb,var(--hero-bg) 32%,transparent),transparent 17%,transparent calc(100% - 154px),var(--hero-bg) calc(100% - 102px))}
-html[data-hero]:not([data-hero="original"]) .hero-btn:not(.primary),
-html[data-hero]:not([data-hero="original"]) .hero-pause{border-color:color-mix(in srgb,var(--hero-ink) 23%,transparent);background:#ffffff56}
-html[data-hero]:not([data-hero="original"]) .reel-chips button::before{background:color-mix(in srgb,var(--hero-ink) 18%,transparent)}
-html[data-hero]:not([data-hero="original"]) body:not(.scrolled) .wordmark{color:var(--hero-ink);background:#ffffffe0}
-html[data-hero]:not([data-hero="original"]) .wordmark img{filter:none}
+:root{
+  /* WUJI brand, system and chart colors. */
+  --black:#000000;--white:#ffffff;--paper:#f4f4f4;--gray:#cacaca;--charcoal:#454545;--ink:#212121;
+  --blue:#207fff;--yellow:#eab308;--green:#16a34a;--red:#de2626;
+  --chart-blue:#7596ca;--chart-yellow:#eebc46;--chart-green:#90ae77;--chart-red:#e15d54;
+  --chart-blue-light:#c1cfe6;--chart-yellow-light:#f4c676;--chart-green-light:#b1c696;--chart-red-light:#f89890;
+  /* Original DexMimicAnything identity. */
+  --dma-ink:#263548;--dma-blue:#3d63b4;--dma-orange:#ac5633;--dma-green:#3d7958;
+}
