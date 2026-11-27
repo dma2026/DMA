@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NQbvifXGjwpEJfhJbLvcFTjXaY4Eo2/9fFQdqDCXKPI=' 'sha256-x7YQkBv8jbltBJpyy7UVm5aAi1892S4xwvRj67GBL4Q=' 'sha256-/PAW4/c2iMhwLFVDHRF+Xgp1V/8KYSEAI2K9c8M1sK0=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-AfxNNyBq1qHNwwbQe5g+W+8m334hS8OqrBm1+Zpq7+4=' 'sha256-YC1I465BzOSRTlnS68SwhU6e+bmR1LEebqpLEiP2BcI='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NQbvifXGjwpEJfhJbLvcFTjXaY4Eo2/9fFQdqDCXKPI=' 'sha256-6fCGFsvWgAgDsgE7FQSQbHl5mRpH8Addsa40nKX3YSM=' 'sha256-tnGkfXYzMtD7H4O4k+XRu0U2HZOl31vELG0pIoE+fg8=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-AfxNNyBq1qHNwwbQe5g+W+8m334hS8OqrBm1+Zpq7+4=' 'sha256-YC1I465BzOSRTlnS68SwhU6e+bmR1LEebqpLEiP2BcI='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script id="segmented-player">/* A plain file GET per segment. The first file includes its initialization
    bytes, so a cold player can decode it before any other response arrives. */
 const DMASegments = (() => {
@@ -497,7 +497,7 @@ const DMAMedia = (() => {
     if (!permits(video.closest('section')?.id)) return Promise.resolve();
     start(video); return video.play();
   }
-  const deepLinkGroups = {why:'why',demos:'l1','level-1':'l1','level-2':'l2','level-3':'l3',simulation:'sim',dataset:'data',method:'method',video:'main'};
+  const deepLinkGroups = {why:'why',demos:'l1','level-1':'l1','level-2':'l2','level-3':'l3',simulation:'sim',dataset:'data',video:'main'};
   const initialGroup = deepLinkGroups[location.hash.slice(1)];
   if (initialGroup) warm(initialGroup);
   function seek(video, time) {
@@ -3035,7 +3035,7 @@ const objectSplitOrder = [1, 0];
   const policy=module('policy',policyTitle('Policy'),network(false));
   const tracking=module('tracking',title('Unseen-object tracking'),scene('sequence'),h('span',{class:'md-tools'},
     [['screwdriver','Screwdriver'],['wrench','Wrench'],['spray','Spray bottle'],['bulb','Light bulb']].map(([key,name])=>asset('unseen-'+key,name))));
-  const teleClip=h('video',{muted:true,loop:true,playsinline:true,preload:'none',poster:'media/method/teleop-bulb-masked.jpg',
+  const teleClip=h('video',{muted:true,loop:true,playsinline:true,preload:'none',poster:'media/method/teleop-bulb.jpg',
     'aria-label':'A human turns a light bulb and the robot follows in the same recording.'});
   teleClip.muted=true;
   const tele=module('tele',title('Teleoperation'),h('span',{class:'md-tele-film'},teleClip,
@@ -3059,9 +3059,9 @@ const objectSplitOrder = [1, 0];
   let playRequest=0;
   function updateFilm() {
     if(!filmVisible || reduced || document.hidden) { playRequest++;teleClip.pause();return; }
-    if(!teleClip.hasAttribute('src')) DMAMedia.set(teleClip, 'media/method/teleop-bulb-masked.mp4');
+    if(!teleClip.hasAttribute('src')) DMAMedia.set(teleClip, 'media/method/teleop-bulb.mp4');
     const request=++playRequest;
-    DMAMedia.play(teleClip).catch(()=>{ if(request===playRequest) teleClip.pause(); });
+    teleClip.play().catch(()=>{ if(request===playRequest) teleClip.pause(); });
   }
   function playback() {
     host.classList.toggle('md-paused',reduced);
@@ -3638,7 +3638,7 @@ const objectSplitOrder = [1, 0];
   const film=document.querySelector('#video video');
   if (!film.paused) DMAMedia.play(film).catch(()=>{}); else DMAMedia.start(film,null,true);
   film.addEventListener('play',()=>DMAMedia.start(film));
-  const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
+  const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], video:['main']};
   const warm = id => {
     if (!DMAMedia.permits(id)) return;
     const hero=document.querySelector('#hero-video');

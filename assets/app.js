@@ -1002,7 +1002,7 @@ const objectSplitOrder = [1, 0];
   const policy=module('policy',policyTitle('Policy'),network(false));
   const tracking=module('tracking',title('Unseen-object tracking'),scene('sequence'),h('span',{class:'md-tools'},
     [['screwdriver','Screwdriver'],['wrench','Wrench'],['spray','Spray bottle'],['bulb','Light bulb']].map(([key,name])=>asset('unseen-'+key,name))));
-  const teleClip=h('video',{muted:true,loop:true,playsinline:true,preload:'none',poster:'media/method/teleop-bulb-masked.jpg',
+  const teleClip=h('video',{muted:true,loop:true,playsinline:true,preload:'none',poster:'media/method/teleop-bulb.jpg',
     'aria-label':'A human turns a light bulb and the robot follows in the same recording.'});
   teleClip.muted=true;
   const tele=module('tele',title('Teleoperation'),h('span',{class:'md-tele-film'},teleClip,
@@ -1026,9 +1026,9 @@ const objectSplitOrder = [1, 0];
   let playRequest=0;
   function updateFilm() {
     if(!filmVisible || reduced || document.hidden) { playRequest++;teleClip.pause();return; }
-    if(!teleClip.hasAttribute('src')) DMAMedia.set(teleClip, 'media/method/teleop-bulb-masked.mp4');
+    if(!teleClip.hasAttribute('src')) DMAMedia.set(teleClip, 'media/method/teleop-bulb.mp4');
     const request=++playRequest;
-    DMAMedia.play(teleClip).catch(()=>{ if(request===playRequest) teleClip.pause(); });
+    teleClip.play().catch(()=>{ if(request===playRequest) teleClip.pause(); });
   }
   function playback() {
     host.classList.toggle('md-paused',reduced);
@@ -1605,7 +1605,7 @@ const objectSplitOrder = [1, 0];
   const film=document.querySelector('#video video');
   if (!film.paused) DMAMedia.play(film).catch(()=>{}); else DMAMedia.start(film,null,true);
   film.addEventListener('play',()=>DMAMedia.start(film));
-  const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], method:['method'], video:['main']};
+  const groups = {top:['hero'], why:['why','l2'], demos:['l1'], 'level-1':['l1'], 'level-2':['l2'], 'level-3':['l3'], simulation:['sim'], dataset:['data'], video:['main']};
   const warm = id => {
     if (!DMAMedia.permits(id)) return;
     const hero=document.querySelector('#hero-video');
