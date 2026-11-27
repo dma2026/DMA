@@ -291,26 +291,14 @@ function stageStrip(cls, pl) {
 
 /* ───────── hero: large demo reel ───────── */
 (function hero() {
-  const hero = $('#top'), stage = $('#hero-stage'), vid = $('#hero-video'), name = $('#reel-name'), chipsHost = $('#reel-chips'), pause = $('#hero-pause');
-  let cur = -1, userPaused = reduced, visible = !location.hash || location.hash === '#top';
+  const hero = $('#top'), stage = $('#hero-stage'), vid = $('#hero-video'), name = $('#reel-name'), chipsHost = $('#reel-chips');
+  let cur = -1, visible = !location.hash || location.hash === '#top';
   vid.muted = true;
   const chips = REEL.map(([, label, , short], i) => h('button', { type: 'button', role: 'tab', title: label, text: short, onclick: () => show(i) }));
   chipsHost.append(...chips);
-  const play = () => { if (visible && !userPaused) DMAMedia.play(vid).catch(() => {}); };
+  const play = () => { if (visible && !reduced) DMAMedia.play(vid).catch(() => {}); };
   // Frame the clip so the hand and tool sit at the centre of the free area left of the title, not the page centre.
-  const copy = $('.hero-copy'), reel = $('.reel'), actions = $('.hero-actions'), stacked = matchMedia('(max-width:700px),(pointer:coarse) and (max-height:500px)');
-  function alignActions() {
-    // Read the natural row each time so repeated updates cannot accumulate a shift.
-    actions.style.removeProperty('--hero-actions-offset');
-    if (stacked.matches) return;
-    const height = pause.getBoundingClientRect().height;
-    if (!height) return;
-    actions.style.setProperty('--hero-pause-height', `${height}px`);
-    const pauseBox = pause.getBoundingClientRect(), actionsBox = actions.getBoundingClientRect();
-    if (!actionsBox.height) return;
-    const offset = pauseBox.top + pauseBox.height / 2 - actionsBox.top - actionsBox.height / 2;
-    actions.style.setProperty('--hero-actions-offset', `${offset.toFixed(2)}px`);
-  }
+  const copy = $('.hero-copy'), reel = $('.reel'), stacked = matchMedia('(max-width:700px),(pointer:coarse) and (max-height:500px)');
   function frame() {
     const st = stage.style;
     const heroBox = hero.getBoundingClientRect(), styles = getComputedStyle(hero);
@@ -323,7 +311,6 @@ function stageStrip(cls, pl) {
       ['--vx', '--vy', '--vw', '--vh'].forEach(p => st.removeProperty(p));
       hero.style.removeProperty('--free');
       hero.style.removeProperty('--hero-video-bottom');
-      alignActions();
       return;
     }
     const clearance = Number.parseFloat(styles.getPropertyValue('--hero-reel-clearance'));
@@ -337,7 +324,6 @@ function stageStrip(cls, pl) {
     st.setProperty('--vw', `${w}px`); st.setProperty('--vh', `${hh}px`);
     st.setProperty('--vx', `${Math.min(0, free / 2 - fx * w)}px`); st.setProperty('--vy', `${fy * H * (1 - scale)}px`);
     hero.style.setProperty('--free', `${free}px`);
-    alignActions();
   }
   function layout() {
     if (stacked.matches) {
@@ -375,7 +361,6 @@ function stageStrip(cls, pl) {
   layoutObserver.observe(hero);
   layoutObserver.observe(copy);
   layoutObserver.observe(reel);
-  layoutObserver.observe(actions);
   stacked.addEventListener('change', layout);
   document.fonts.ready.then(layout);
   function show(i) {
@@ -390,11 +375,9 @@ function stageStrip(cls, pl) {
   }
   vid.addEventListener('timeupdate', () => chips[cur]?.style.setProperty('--p', vid.currentTime / (vid.duration || 1)));
   vid.addEventListener('ended', () => show(cur + 1));
-  const syncPause = () => { pause.querySelector('span').textContent = userPaused ? 'Play' : 'Pause'; pause.querySelector('path').setAttribute('d', userPaused ? ICON.play : ICON.pause); };
-  pause.onclick = () => { userPaused = !userPaused; syncPause(); userPaused ? vid.pause() : play(); };
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? play() : vid.pause(); }, { threshold: .1 }).observe(hero);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) play(); });
-  syncPause(); show(0);
+  show(0);
   if (visible && siteMotionEnabled()) {
     siteGsap.fromTo([...copy.children], { opacity: 0, y: 16 }, {
       opacity: 1, y: 0, duration: .62, ease: 'power2.out', stagger: .065,
@@ -871,7 +854,6 @@ const objectSplitOrder = [1, 0];
   const board = h('div',{class:'md-board'});
   const heading = h('strong'), copy = h('span', { class: 'caption' });
   const details = h('div',{class:'md-details'},heading,copy);
-  const pause = h('button',{class:'md-motion',type:'button'});
   const notes = {
     data:['DexEmpla','The glove records 21 hand keypoints, and motion capture tracks the wrist and object. The robot-hand references run at 50 Hz and mark when the hand must support the object.'],
     sampling:['Sampling with exclusion','Low-return one-second segments are sampled more often. Persistently failing segments are excluded as starting points, though a rollout can still pass through them.'],
@@ -894,7 +876,7 @@ const objectSplitOrder = [1, 0];
       el.setAttribute('aria-pressed',String(key===pinned));
     }
     for(const el of board.querySelectorAll('[data-route]')) el.classList.toggle('md-hot',el.dataset.route.split(' ').includes(id));
-    const note=notes[id] || ['Model-based training','Simulated transitions train the world model. The policy improves by differentiating through rollouts in that model, then runs unchanged on the robot.'];
+    const note=notes[id] || ['', ''];
     heading.textContent=note[0];copy.textContent=note[1];
   }
   function module(id,...contents) {
@@ -1037,20 +1019,19 @@ const objectSplitOrder = [1, 0];
   board.append(column('DexEmpla','md-data-col',data),training,deployment);
   const paths=h('svg',{class:'md-wires','aria-hidden':true});
   board.prepend(paths);
-  const footer=h('div',{class:'md-footer'},details,pause);
+  const footer=h('div',{class:'md-footer'},details);
   host.append(board,footer);
   let flows=[], ticking=false, elapsed=0, decorative=[];
-  let paused=reduced, filmVisible=false;
+  let filmVisible=false;
   let playRequest=0;
   function updateFilm() {
-    if(!filmVisible || paused || document.hidden) { playRequest++;teleClip.pause();return; }
+    if(!filmVisible || reduced || document.hidden) { playRequest++;teleClip.pause();return; }
     if(!teleClip.hasAttribute('src')) DMAMedia.set(teleClip, 'media/method/teleop-bulb-masked.mp4');
     const request=++playRequest;
     DMAMedia.play(teleClip).catch(()=>{ if(request===playRequest) teleClip.pause(); });
   }
   function playback() {
-    host.classList.toggle('md-paused',paused);
-    pause.textContent=paused?'Play animation':'Pause animation';
+    host.classList.toggle('md-paused',reduced);
     scheduleFlow();
     updateFilm();
   }
@@ -1083,7 +1064,7 @@ const objectSplitOrder = [1, 0];
     scheduleFlow();
     return () => { decorative = []; scheduleFlow(); };
   });
-  pause.onclick=()=>{paused=!paused;playback();};playback();
+  playback();
   host.onkeydown=e=>{if(e.key==='Escape'){pinned=null;display(null);}};
   new IntersectionObserver(([entry])=>{
     host.classList.toggle('md-visible',entry.isIntersecting);
@@ -1128,7 +1109,7 @@ const objectSplitOrder = [1, 0];
     flows.forEach(flow=>paintFlow(flow,elapsed));
   }
   function scheduleFlow() {
-    const playing = siteMotionEnabled() && !paused && !document.hidden && host.classList.contains('md-visible');
+    const playing = siteMotionEnabled() && !reduced && !document.hidden && host.classList.contains('md-visible');
     decorative.forEach(timeline => timeline.paused(!playing));
     const needsTicker = Boolean(playing && flows.length);
     if (needsTicker !== ticking) {
@@ -1352,14 +1333,6 @@ const objectSplitOrder = [1, 0];
         : [...experiment.rows].reverse().map(r => ({ name: r[0], desc: r === experiment.rows.at(-1) ? 'DMA' : r[1], own: r === experiment.rows.at(-1), time: experiment === ABL.inputs ? r[1] : null, pair: r.slice(2 + split * 2, 4 + split * 2) }));
       chart.append(bars(rows));
     }
-    const standard = real ? (metric === 0 ? 'A trial succeeds if every stage is completed without dropping the tool (15 trials per task and mode).' : 'Task progress is the fraction of stages completed, averaged over 15 trials per task and mode.') : isError
-      ? (metric === 2
-        ? 'Fingertip error is measured in the palm frame. Joint error is the mean absolute finger joint angle error. Read both alongside success rate: errors cover only the interaction frames reached.'
-        : 'Mean object translation and rotation errors over the interaction frames reached. SimToolReal measures error at object waypoints.')
-      : timing ? 'Success across 435 test references. Each checkpoint is averaged over five evaluation seeds (training seed 42). Training time excludes evaluation.'
-      : training && experiment === ABL.inputs ? 'One H200, excluding evaluation. Success rates show mean ± SD over five evaluation seeds for training seed 42.'
-      : 'A rollout succeeds if the object stays within 50 mm and 45° of its reference pose at every frame of the motion.';
-    chart.append(h('p', { class: 'rx-standard caption', text: standard }));
     const currentToolbar = dashboard.querySelector('.rx-toolbar');
     const currentButtons = currentToolbar && [...currentToolbar.querySelectorAll('button')];
     const nextButtons = [...toolbar.querySelectorAll('button')];

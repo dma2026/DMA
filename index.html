@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NQbvifXGjwpEJfhJbLvcFTjXaY4Eo2/9fFQdqDCXKPI=' 'sha256-x7YQkBv8jbltBJpyy7UVm5aAi1892S4xwvRj67GBL4Q=' 'sha256-t/d7EYgUZGbJltB6vvpRaMYqP8Yl9iIlJG4mv/7NbIg=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-AfxNNyBq1qHNwwbQe5g+W+8m334hS8OqrBm1+Zpq7+4=' 'sha256-mh7WdhgziRvNS6nuSLtKLWAr7USsLFUdJqM0jOMJ2oU='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NQbvifXGjwpEJfhJbLvcFTjXaY4Eo2/9fFQdqDCXKPI=' 'sha256-x7YQkBv8jbltBJpyy7UVm5aAi1892S4xwvRj67GBL4Q=' 'sha256-/PAW4/c2iMhwLFVDHRF+Xgp1V/8KYSEAI2K9c8M1sK0=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-AfxNNyBq1qHNwwbQe5g+W+8m334hS8OqrBm1+Zpq7+4=' 'sha256-YC1I465BzOSRTlnS68SwhU6e+bmR1LEebqpLEiP2BcI='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script id="segmented-player">/* A plain file GET per segment. The first file includes its initialization
    bytes, so a cold player can decode it before any other response arrives. */
 const DMASegments = (() => {
@@ -1336,7 +1336,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
   object-position:center;
 }
 .hero-actions .hero-btn {
-  height:var(--hero-pause-height,41.1px);
+  height:41px;
   min-height:0;
   padding-block:0;
 }
@@ -1365,7 +1365,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
   max-width:100%;
   gap:16px;
   flex-wrap:nowrap;
-  transform:translateY(var(--hero-actions-offset,0px));
+  margin-top:26px;
 }
 @media (min-width:701px) and (max-width:1000px) {
   .hero-actions {gap:12px}
@@ -1376,7 +1376,17 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
   .hero-actions .hero-btn {padding-inline:6px}
 }
 
-/* Stack the reel text on the left, with Pause centred beside it on the right. */
+@media (min-width:701px) {
+  .hero-copy {
+    --hero-text-shift:clamp(20px,2.2vw,36px);
+    padding-block:calc(110px + var(--hero-text-shift)) calc(120px - var(--hero-text-shift));
+  }
+}
+@media (pointer:coarse) and (max-height:500px) and (min-width:701px) {
+  .hero-copy {padding-block:22px 40px}
+}
+
+/* Stack the reel description above the clip selector. */
 .reel {
   --reel-gap:8px;
   --reel-gaps:calc(5 * var(--reel-gap));
@@ -1419,13 +1429,6 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-}
-.reel-now>.hero-pause {
-  grid-area:auto;
-  place-self:auto;
-  align-self:center;
-  flex:0 0 auto;
-  margin:0;
 }
 @media (max-width:700px),(pointer:coarse) and (max-height:500px) {
   /* Let both lines clear the video when the controls sit in normal flow. */
@@ -1855,7 +1858,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 <header class="site-header">
   <a class="wordmark" href="#top" aria-label="DexMimicAnything"><img src="assets/mark.svg?v=mist" alt="" width="46" height="32"><span class="wordmark-label" aria-hidden="true"><span class="wordmark-name">DexMimicAnything</span></span></a>
   <nav aria-label="Sections">
-    <a href="#why">Motivation</a><a href="#demos">Real-World Demos</a><a href="#simulation">Simulation</a><a href="#dataset">Dataset</a><a href="#method">Method</a><a href="#results">Results</a><a href="#video">Video</a>
+    <a href="#why">Motivation</a><a href="#demos">Real-World Demos</a><a href="#dataset">Dataset</a><a href="#simulation">Simulation Rollouts</a><a href="#method">Method</a><a href="#results">Results</a><a href="#video">Video</a>
   </nav>
 </header>
 
@@ -1874,7 +1877,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
   <div class="hero-stage" id="hero-stage"><video id="hero-video" muted playsinline preload="none" data-clip-path="media/reel/hammer_drive_nail.mp4" poster="media/reel/hammer_drive_nail.webp" src="media/reel/hammer_drive_nail.mp4?v=clips-241" aria-label="Real-robot demonstrations, one task at a time"></video></div>
   <div class="hero-controls">
     <div class="reel">
-      <div class="reel-now"><span class="reel-copy"><b id="reel-name"></b><span>Motion tracking · unseen tool · 1.0×</span></span><button class="hero-pause" id="hero-pause" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg><span>Pause</span></button></div>
+      <div class="reel-now"><span class="reel-copy"><b id="reel-name"></b><span>Motion tracking · unseen tool · 1.0×</span></span></div>
       <div class="reel-chips" id="reel-chips" role="tablist" aria-label="Demonstration"></div>
     </div>
   </div>
@@ -1898,7 +1901,6 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
         <figcaption><b>Teleoperation with DMA</b><span>The controller adjusts finger motion as the grasp changes.</span></figcaption>
       </figure>
     </div>
-    <p class="fine reveal"><span class="caption">Real robot, 1.0×. In both columns the operator handles one copy of the tool and the robot handles a second copy.</span></p>
   </div>
 </section>
 
@@ -1922,7 +1924,6 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
     <div class="section-heading heading-row reveal">
       <div><h2 class="level-title" id="l1-title"><span class="level-badge">Level 1</span> <span>Primitive in-hand skills</span></h2>
       <p class="level-subtitle">Rotate, translate, and reorient an object inside the hand</p></div>
-      <p class="section-intro">The policy controls the finger joints to manipulate geometric objects, while the arm tracks the reference wrist pose.</p>
     </div>
     <div class="deck reveal" id="deck-prim"></div>
 
@@ -1934,7 +1935,6 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
     <div class="section-heading heading-row reveal">
       <div><h2 class="level-title" id="l2-title"><span class="level-badge">Level 2</span> <span>Unseen Tool Use</span></h2>
       <p class="level-subtitle">The primitives combine into complete tool-use tasks</p></div>
-      <p class="section-intro">None of these tools appear in training. Each task chains a grasp, in-hand adjustments, and a functional action. The reference comes either from a recorded human demonstration or from a live operator.</p>
     </div>
     <div class="deck reveal" id="deck-tools"></div>
   </div>
@@ -1945,21 +1945,8 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
     <div class="section-heading heading-row reveal">
       <div><h2 class="level-title" id="l3-title"><span class="level-badge">Level 3</span> <span>Sequential Tool Use</span></h2>
       <p class="level-subtitle">Two tools, one continuous teleoperated run</p></div>
-      <p class="section-intro">The operator completes two consecutive tool-use tasks without resetting the policy.</p>
     </div>
     <div class="duo reveal" id="duo"></div>
-  </div>
-</section>
-
-<!-- ───────────── Simulation demos ───────────── -->
-<section class="section sim-section" id="simulation" aria-labelledby="sim-title">
-  <div class="wrap wide">
-    <header class="section-header reveal">
-      <h2 id="sim-title"><span class="section-number">03 /</span> <span>Simulation</span></h2>
-      <p>A single policy tracks held-out motions on 34 training objects and nine unseen tools.</p>
-    </header>
-    <div class="reveal" id="sim-root"></div>
-    <p class="sim-caption caption"><span class="sim-mouse-hint">Palm-camera view. Hover to preview a rollout, or click to pin and unpin it.</span><span class="sim-touch-hint">Palm-camera view. Tap a rollout to enlarge it, then tap again to return.</span></p>
   </div>
 </section>
 
@@ -1967,11 +1954,22 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 <section class="section data-section" id="dataset" aria-labelledby="data-title">
   <div class="wrap wide">
     <header class="section-header reveal">
-      <h2 id="data-title"><span class="section-number">04 /</span> <span>DexEmpla Dataset</span></h2>
+      <h2 id="data-title"><span class="section-number">03 /</span> <span>DexEmpla Dataset</span></h2>
       <p>DexEmpla pairs 40.1 hours of human in-hand manipulation with robot-hand references.</p>
     </header>
     <div class="datalab reveal" id="datalab"></div>
     <div class="datastats reveal" id="datastats"></div>
+  </div>
+</section>
+
+<!-- ───────────── Simulation Rollouts ───────────── -->
+<section class="section sim-section" id="simulation" aria-labelledby="sim-title">
+  <div class="wrap wide">
+    <header class="section-header reveal">
+      <h2 id="sim-title"><span class="section-number">04 /</span> <span>Simulation Rollouts</span></h2>
+      <p>A single policy tracks held-out motions on 34 training objects and nine unseen tools.</p>
+    </header>
+    <div class="reveal" id="sim-root"></div>
   </div>
 </section>
 
@@ -2326,26 +2324,14 @@ function stageStrip(cls, pl) {
 
 /* ───────── hero: large demo reel ───────── */
 (function hero() {
-  const hero = $('#top'), stage = $('#hero-stage'), vid = $('#hero-video'), name = $('#reel-name'), chipsHost = $('#reel-chips'), pause = $('#hero-pause');
-  let cur = -1, userPaused = reduced, visible = !location.hash || location.hash === '#top';
+  const hero = $('#top'), stage = $('#hero-stage'), vid = $('#hero-video'), name = $('#reel-name'), chipsHost = $('#reel-chips');
+  let cur = -1, visible = !location.hash || location.hash === '#top';
   vid.muted = true;
   const chips = REEL.map(([, label, , short], i) => h('button', { type: 'button', role: 'tab', title: label, text: short, onclick: () => show(i) }));
   chipsHost.append(...chips);
-  const play = () => { if (visible && !userPaused) DMAMedia.play(vid).catch(() => {}); };
+  const play = () => { if (visible && !reduced) DMAMedia.play(vid).catch(() => {}); };
   // Frame the clip so the hand and tool sit at the centre of the free area left of the title, not the page centre.
-  const copy = $('.hero-copy'), reel = $('.reel'), actions = $('.hero-actions'), stacked = matchMedia('(max-width:700px),(pointer:coarse) and (max-height:500px)');
-  function alignActions() {
-    // Read the natural row each time so repeated updates cannot accumulate a shift.
-    actions.style.removeProperty('--hero-actions-offset');
-    if (stacked.matches) return;
-    const height = pause.getBoundingClientRect().height;
-    if (!height) return;
-    actions.style.setProperty('--hero-pause-height', `${height}px`);
-    const pauseBox = pause.getBoundingClientRect(), actionsBox = actions.getBoundingClientRect();
-    if (!actionsBox.height) return;
-    const offset = pauseBox.top + pauseBox.height / 2 - actionsBox.top - actionsBox.height / 2;
-    actions.style.setProperty('--hero-actions-offset', `${offset.toFixed(2)}px`);
-  }
+  const copy = $('.hero-copy'), reel = $('.reel'), stacked = matchMedia('(max-width:700px),(pointer:coarse) and (max-height:500px)');
   function frame() {
     const st = stage.style;
     const heroBox = hero.getBoundingClientRect(), styles = getComputedStyle(hero);
@@ -2358,7 +2344,6 @@ function stageStrip(cls, pl) {
       ['--vx', '--vy', '--vw', '--vh'].forEach(p => st.removeProperty(p));
       hero.style.removeProperty('--free');
       hero.style.removeProperty('--hero-video-bottom');
-      alignActions();
       return;
     }
     const clearance = Number.parseFloat(styles.getPropertyValue('--hero-reel-clearance'));
@@ -2372,7 +2357,6 @@ function stageStrip(cls, pl) {
     st.setProperty('--vw', `${w}px`); st.setProperty('--vh', `${hh}px`);
     st.setProperty('--vx', `${Math.min(0, free / 2 - fx * w)}px`); st.setProperty('--vy', `${fy * H * (1 - scale)}px`);
     hero.style.setProperty('--free', `${free}px`);
-    alignActions();
   }
   function layout() {
     if (stacked.matches) {
@@ -2410,7 +2394,6 @@ function stageStrip(cls, pl) {
   layoutObserver.observe(hero);
   layoutObserver.observe(copy);
   layoutObserver.observe(reel);
-  layoutObserver.observe(actions);
   stacked.addEventListener('change', layout);
   document.fonts.ready.then(layout);
   function show(i) {
@@ -2425,11 +2408,9 @@ function stageStrip(cls, pl) {
   }
   vid.addEventListener('timeupdate', () => chips[cur]?.style.setProperty('--p', vid.currentTime / (vid.duration || 1)));
   vid.addEventListener('ended', () => show(cur + 1));
-  const syncPause = () => { pause.querySelector('span').textContent = userPaused ? 'Play' : 'Pause'; pause.querySelector('path').setAttribute('d', userPaused ? ICON.play : ICON.pause); };
-  pause.onclick = () => { userPaused = !userPaused; syncPause(); userPaused ? vid.pause() : play(); };
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; visible ? play() : vid.pause(); }, { threshold: .1 }).observe(hero);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) play(); });
-  syncPause(); show(0);
+  show(0);
   if (visible && siteMotionEnabled()) {
     siteGsap.fromTo([...copy.children], { opacity: 0, y: 16 }, {
       opacity: 1, y: 0, duration: .62, ease: 'power2.out', stagger: .065,
@@ -2906,7 +2887,6 @@ const objectSplitOrder = [1, 0];
   const board = h('div',{class:'md-board'});
   const heading = h('strong'), copy = h('span', { class: 'caption' });
   const details = h('div',{class:'md-details'},heading,copy);
-  const pause = h('button',{class:'md-motion',type:'button'});
   const notes = {
     data:['DexEmpla','The glove records 21 hand keypoints, and motion capture tracks the wrist and object. The robot-hand references run at 50 Hz and mark when the hand must support the object.'],
     sampling:['Sampling with exclusion','Low-return one-second segments are sampled more often. Persistently failing segments are excluded as starting points, though a rollout can still pass through them.'],
@@ -2929,7 +2909,7 @@ const objectSplitOrder = [1, 0];
       el.setAttribute('aria-pressed',String(key===pinned));
     }
     for(const el of board.querySelectorAll('[data-route]')) el.classList.toggle('md-hot',el.dataset.route.split(' ').includes(id));
-    const note=notes[id] || ['Model-based training','Simulated transitions train the world model. The policy improves by differentiating through rollouts in that model, then runs unchanged on the robot.'];
+    const note=notes[id] || ['', ''];
     heading.textContent=note[0];copy.textContent=note[1];
   }
   function module(id,...contents) {
@@ -3072,20 +3052,19 @@ const objectSplitOrder = [1, 0];
   board.append(column('DexEmpla','md-data-col',data),training,deployment);
   const paths=h('svg',{class:'md-wires','aria-hidden':true});
   board.prepend(paths);
-  const footer=h('div',{class:'md-footer'},details,pause);
+  const footer=h('div',{class:'md-footer'},details);
   host.append(board,footer);
   let flows=[], ticking=false, elapsed=0, decorative=[];
-  let paused=reduced, filmVisible=false;
+  let filmVisible=false;
   let playRequest=0;
   function updateFilm() {
-    if(!filmVisible || paused || document.hidden) { playRequest++;teleClip.pause();return; }
+    if(!filmVisible || reduced || document.hidden) { playRequest++;teleClip.pause();return; }
     if(!teleClip.hasAttribute('src')) DMAMedia.set(teleClip, 'media/method/teleop-bulb-masked.mp4');
     const request=++playRequest;
     DMAMedia.play(teleClip).catch(()=>{ if(request===playRequest) teleClip.pause(); });
   }
   function playback() {
-    host.classList.toggle('md-paused',paused);
-    pause.textContent=paused?'Play animation':'Pause animation';
+    host.classList.toggle('md-paused',reduced);
     scheduleFlow();
     updateFilm();
   }
@@ -3118,7 +3097,7 @@ const objectSplitOrder = [1, 0];
     scheduleFlow();
     return () => { decorative = []; scheduleFlow(); };
   });
-  pause.onclick=()=>{paused=!paused;playback();};playback();
+  playback();
   host.onkeydown=e=>{if(e.key==='Escape'){pinned=null;display(null);}};
   new IntersectionObserver(([entry])=>{
     host.classList.toggle('md-visible',entry.isIntersecting);
@@ -3163,7 +3142,7 @@ const objectSplitOrder = [1, 0];
     flows.forEach(flow=>paintFlow(flow,elapsed));
   }
   function scheduleFlow() {
-    const playing = siteMotionEnabled() && !paused && !document.hidden && host.classList.contains('md-visible');
+    const playing = siteMotionEnabled() && !reduced && !document.hidden && host.classList.contains('md-visible');
     decorative.forEach(timeline => timeline.paused(!playing));
     const needsTicker = Boolean(playing && flows.length);
     if (needsTicker !== ticking) {
@@ -3387,14 +3366,6 @@ const objectSplitOrder = [1, 0];
         : [...experiment.rows].reverse().map(r => ({ name: r[0], desc: r === experiment.rows.at(-1) ? 'DMA' : r[1], own: r === experiment.rows.at(-1), time: experiment === ABL.inputs ? r[1] : null, pair: r.slice(2 + split * 2, 4 + split * 2) }));
       chart.append(bars(rows));
     }
-    const standard = real ? (metric === 0 ? 'A trial succeeds if every stage is completed without dropping the tool (15 trials per task and mode).' : 'Task progress is the fraction of stages completed, averaged over 15 trials per task and mode.') : isError
-      ? (metric === 2
-        ? 'Fingertip error is measured in the palm frame. Joint error is the mean absolute finger joint angle error. Read both alongside success rate: errors cover only the interaction frames reached.'
-        : 'Mean object translation and rotation errors over the interaction frames reached. SimToolReal measures error at object waypoints.')
-      : timing ? 'Success across 435 test references. Each checkpoint is averaged over five evaluation seeds (training seed 42). Training time excludes evaluation.'
-      : training && experiment === ABL.inputs ? 'One H200, excluding evaluation. Success rates show mean ± SD over five evaluation seeds for training seed 42.'
-      : 'A rollout succeeds if the object stays within 50 mm and 45° of its reference pose at every frame of the motion.';
-    chart.append(h('p', { class: 'rx-standard caption', text: standard }));
     const currentToolbar = dashboard.querySelector('.rx-toolbar');
     const currentButtons = currentToolbar && [...currentToolbar.querySelectorAll('button')];
     const nextButtons = [...toolbar.querySelectorAll('button')];
