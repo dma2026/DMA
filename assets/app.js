@@ -1221,7 +1221,7 @@ const objectSplitOrder = [1, 0];
 /* ───────── results explorer ───────── */
 (function results() {
   const host = $('#rx');
-  const studies = ['Simulation', 'Real world', 'Ablations', 'Training analysis'];
+  const studies = ['Simulation', 'Real-World Evaluation', 'Ablation Studies', 'Training analysis'];
   const metrics = ['Success rate', 'Object tracking', 'Hand tracking'];
   const ablations = [ABL.rep, ABL.samp, ABL.gate];
   const trainingTopics = ['Training time', ABL.size.name, ABL.inputs.name];
@@ -1317,12 +1317,12 @@ const objectSplitOrder = [1, 0];
     const options = sim ? metrics : real ? ['Success rate', 'Task progress'] : training ? trainingTopics : ablations.map(a => a.name);
     const metricName = sim || real ? options[metric] : 'Success rate';
     const title = training ? ['Model-based RL vs. PPO', 'Demonstration data scale', 'Critic and world-model inputs'][metric]
-      : ['Comparison with baselines', 'Zero-shot tool use', 'Ablation study'][study];
+      : ['Comparison with baselines', 'Zero-Shot Tool Use', 'Ablation Studies'][study];
     const labels = real ? ['Motion tracking', 'Teleoperation'] : ['Seen objects', 'Unseen objects'];
     const tones = real ? ['blue', 'green'] : ['green', 'blue'];
     const intro = sim
       ? 'DMA has the highest tracking success rate on both seen and unseen objects.'
-      : real ? 'One policy performs six tasks with unseen tools. Live teleoperation matches or improves on recorded motion tracking in every task.'
+      : real ? 'The same policy performs six tasks with unseen tools. Teleoperation yields a higher success rate than motion tracking on five tasks and the same rate on the sixth.'
       : timing ? 'On one H200, DMA reaches 77.0% success in 4.7 hours. PPO reaches a comparable success rate after about 18 hours on four H200s.'
       : ablationIntro(experiment, split);
     const header = h('div', { class: 'rx-head' }, h('h3', { text: title }), h('p', { text: intro }));

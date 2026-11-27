@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
 <meta name="description" content="DexMimicAnything: one hand–object co-tracking controller that learns in-hand skills from human demonstrations on primitive shapes and runs zero-shot on unseen tools.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NQbvifXGjwpEJfhJbLvcFTjXaY4Eo2/9fFQdqDCXKPI=' 'sha256-x7YQkBv8jbltBJpyy7UVm5aAi1892S4xwvRj67GBL4Q=' 'sha256-nl0IOCHXALtwiaa6Y1DgIxxRpsWv8/Lf2KSJ/Upwi84=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-AfxNNyBq1qHNwwbQe5g+W+8m334hS8OqrBm1+Zpq7+4=' 'sha256-mh7WdhgziRvNS6nuSLtKLWAr7USsLFUdJqM0jOMJ2oU='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NQbvifXGjwpEJfhJbLvcFTjXaY4Eo2/9fFQdqDCXKPI=' 'sha256-x7YQkBv8jbltBJpyy7UVm5aAi1892S4xwvRj67GBL4Q=' 'sha256-t/d7EYgUZGbJltB6vvpRaMYqP8Yl9iIlJG4mv/7NbIg=' 'sha256-kxFCuXoakkaWmqYzlmZ5lFTek9wl+j96Yg5h2igupf0='; style-src 'self' 'sha256-AfxNNyBq1qHNwwbQe5g+W+8m334hS8OqrBm1+Zpq7+4=' 'sha256-mh7WdhgziRvNS6nuSLtKLWAr7USsLFUdJqM0jOMJ2oU='; img-src 'self' data:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <script id="segmented-player">/* A plain file GET per segment. The first file includes its initialization
    bytes, so a cold player can decode it before any other response arrives. */
 const DMASegments = (() => {
@@ -1855,7 +1855,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 <header class="site-header">
   <a class="wordmark" href="#top" aria-label="DexMimicAnything"><img src="assets/mark.svg?v=mist" alt="" width="46" height="32"><span class="wordmark-label" aria-hidden="true"><span class="wordmark-name">DexMimicAnything</span></span></a>
   <nav aria-label="Sections">
-    <a href="#why">Motivation</a><a href="#demos">Real robot</a><a href="#simulation">Simulation</a><a href="#dataset">Dataset</a><a href="#method">Method</a><a href="#results">Results</a><a href="#video">Video</a>
+    <a href="#why">Motivation</a><a href="#demos">Real-World Demos</a><a href="#simulation">Simulation</a><a href="#dataset">Dataset</a><a href="#method">Method</a><a href="#results">Results</a><a href="#video">Video</a>
   </nav>
 </header>
 
@@ -1864,10 +1864,10 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 <section class="hero" id="top" aria-labelledby="hero-title">
   <div class="hero-copy">
     <h1 id="hero-title"><span class="dex">Dex</span><span class="mimic">Mimic</span><em>Anything:</em> <span class="hero-sub hero-paper-subtitle">Learning Generalizable In-Hand Skills from Human Demonstrations</span></h1>
-    <p class="tldr">One reactive hand–object co-tracking controller. It learns in-hand rotation, translation, and regrasping from human demonstrations on 34 primitive shapes, and runs zero-shot on unseen tools.</p>
+    <p class="tldr">DexMimicAnything learns in-hand rotation, translation, and regrasping from human demonstrations on 34 geometric objects. The same hand–object co-tracking controller performs tool-use tasks with unseen tools without fine-tuning.</p>
     <div class="hero-actions">
       <a class="hero-btn primary" href="#video"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>Watch the video</a>
-      <a class="hero-btn" href="#demos">Demos</a>
+      <a class="hero-btn" href="#demos">Real-World Demos</a>
       <a class="hero-btn" href="#results">Results</a>
     </div>
   </div>
@@ -1902,17 +1902,17 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
   </div>
 </section>
 
-<!-- ───────────── Real-robot demos ───────────── -->
+<!-- ───────────── Real-World Demonstrations ───────────── -->
 <section class="section chapter" id="demos" aria-labelledby="demos-title">
   <div class="wrap wide reveal">
     <header class="section-header">
-      <h2 id="demos-title"><span class="section-number">02 /</span> <span>Real-robot demos</span></h2>
+      <h2 id="demos-title"><span class="section-number">02 /</span> <span>Real-World Demonstrations</span></h2>
       <p>One frozen policy performs single in-hand motions, tool-use tasks, and multi-tool sequences.</p>
     </header>
     <div class="chapter-links">
       <a href="#level-1" data-level="1"><i>1</i>Primitive in-hand skills</a>
-      <a href="#level-2" data-level="2"><i>2</i>Tool use with unseen tools</a>
-      <a href="#level-3" data-level="3"><i>3</i>Several tools in one run</a>
+      <a href="#level-2" data-level="2"><i>2</i>Unseen Tool Use</a>
+      <a href="#level-3" data-level="3"><i>3</i>Sequential Tool Use</a>
     </div>
   </div>
 </section>
@@ -1922,7 +1922,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
     <div class="section-heading heading-row reveal">
       <div><h2 class="level-title" id="l1-title"><span class="level-badge">Level 1</span> <span>Primitive in-hand skills</span></h2>
       <p class="level-subtitle">Rotate, translate, and reorient an object inside the hand</p></div>
-      <p class="section-intro">The objects are the kind of geometric primitives the policy is trained on, and the fingers do the work while the arm follows the reference wrist.</p>
+      <p class="section-intro">The policy controls the finger joints to manipulate geometric objects, while the arm tracks the reference wrist pose.</p>
     </div>
     <div class="deck reveal" id="deck-prim"></div>
 
@@ -1932,7 +1932,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 <section class="section level" id="level-2" data-level="2" aria-labelledby="l2-title">
   <div class="wrap wide">
     <div class="section-heading heading-row reveal">
-      <div><h2 class="level-title" id="l2-title"><span class="level-badge">Level 2</span> <span>Tool use with unseen tools</span></h2>
+      <div><h2 class="level-title" id="l2-title"><span class="level-badge">Level 2</span> <span>Unseen Tool Use</span></h2>
       <p class="level-subtitle">The primitives combine into complete tool-use tasks</p></div>
       <p class="section-intro">None of these tools appear in training. Each task chains a grasp, in-hand adjustments, and a functional action. The reference comes either from a recorded human demonstration or from a live operator.</p>
     </div>
@@ -1943,9 +1943,9 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 <section class="section level" id="level-3" data-level="3" aria-labelledby="l3-title">
   <div class="wrap wide">
     <div class="section-heading heading-row reveal">
-      <div><h2 class="level-title" id="l3-title"><span class="level-badge">Level 3</span> <span>Several tools in one run</span></h2>
+      <div><h2 class="level-title" id="l3-title"><span class="level-badge">Level 3</span> <span>Sequential Tool Use</span></h2>
       <p class="level-subtitle">Two tools, one continuous teleoperated run</p></div>
-      <p class="section-intro">The operator finishes one task, puts the tool down, and picks up the next. The policy is not reset in between.</p>
+      <p class="section-intro">The operator completes two consecutive tool-use tasks without resetting the policy.</p>
     </div>
     <div class="duo reveal" id="duo"></div>
   </div>
@@ -1967,7 +1967,7 @@ svg .mu{fill:var(--muted)}svg .bd{fill:var(--body)}svg .grid{stroke:var(--line)}
 <section class="section data-section" id="dataset" aria-labelledby="data-title">
   <div class="wrap wide">
     <header class="section-header reveal">
-      <h2 id="data-title"><span class="section-number">04 /</span> <span>Dataset</span></h2>
+      <h2 id="data-title"><span class="section-number">04 /</span> <span>DexEmpla Dataset</span></h2>
       <p>DexEmpla pairs 40.1 hours of human in-hand manipulation with robot-hand references.</p>
     </header>
     <div class="datalab reveal" id="datalab"></div>
@@ -3256,7 +3256,7 @@ const objectSplitOrder = [1, 0];
 /* ───────── results explorer ───────── */
 (function results() {
   const host = $('#rx');
-  const studies = ['Simulation', 'Real world', 'Ablations', 'Training analysis'];
+  const studies = ['Simulation', 'Real-World Evaluation', 'Ablation Studies', 'Training analysis'];
   const metrics = ['Success rate', 'Object tracking', 'Hand tracking'];
   const ablations = [ABL.rep, ABL.samp, ABL.gate];
   const trainingTopics = ['Training time', ABL.size.name, ABL.inputs.name];
@@ -3352,12 +3352,12 @@ const objectSplitOrder = [1, 0];
     const options = sim ? metrics : real ? ['Success rate', 'Task progress'] : training ? trainingTopics : ablations.map(a => a.name);
     const metricName = sim || real ? options[metric] : 'Success rate';
     const title = training ? ['Model-based RL vs. PPO', 'Demonstration data scale', 'Critic and world-model inputs'][metric]
-      : ['Comparison with baselines', 'Zero-shot tool use', 'Ablation study'][study];
+      : ['Comparison with baselines', 'Zero-Shot Tool Use', 'Ablation Studies'][study];
     const labels = real ? ['Motion tracking', 'Teleoperation'] : ['Seen objects', 'Unseen objects'];
     const tones = real ? ['blue', 'green'] : ['green', 'blue'];
     const intro = sim
       ? 'DMA has the highest tracking success rate on both seen and unseen objects.'
-      : real ? 'One policy performs six tasks with unseen tools. Live teleoperation matches or improves on recorded motion tracking in every task.'
+      : real ? 'The same policy performs six tasks with unseen tools. Teleoperation yields a higher success rate than motion tracking on five tasks and the same rate on the sixth.'
       : timing ? 'On one H200, DMA reaches 77.0% success in 4.7 hours. PPO reaches a comparable success rate after about 18 hours on four H200s.'
       : ablationIntro(experiment, split);
     const header = h('div', { class: 'rx-head' }, h('h3', { text: title }), h('p', { text: intro }));
